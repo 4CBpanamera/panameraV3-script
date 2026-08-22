@@ -1579,11 +1579,7 @@ local function toggleGUI()
     mainFrame.Visible = guiVisible
 end
 
-local Players = game:GetService("Players")
-local workspaceService = game:GetService("Workspace")
-local debrisService = game:GetService("Debris")
-local ContextActionService = game:GetService("ContextActionService")
-local localPlayer = Players.LocalPlayer
+
 
 AnchoredObjects = AnchoredObjects or {}
 SB_LineTransparencyValue = SB_LineTransparencyValue or Instance.new("NumberValue")
