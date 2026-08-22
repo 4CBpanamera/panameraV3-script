@@ -141,6 +141,17 @@ espFolder.Name = "PANAMERA_ESP"
 espFolder.Parent = game.CoreGui
 local espElements = {}
 
+-- Простой звук при захвате
+local function PlayGrabSound()
+    local sound = Instance.new("Sound")
+    sound.SoundId = "rbxassetid://140207837688369"
+    sound.Volume = 1
+    sound.PlaybackSpeed = 1
+    sound.Parent = game:GetService("Workspace")
+    sound:Play()
+    game:GetService("Debris"):AddItem(sound, 3)
+end
+
 -- ============================================
 -- АНЧОРИК
 -- ============================================
