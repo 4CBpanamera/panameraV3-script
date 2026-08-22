@@ -1,13 +1,51 @@
--- ЗВУК ПРИ ЗАХВАТЕ
+-- ============================================
+-- ЗВУК ПРИ ЗАХВАТЕ (РАБОЧАЯ ВЕРСИЯ)
+-- ============================================
+
 local function PlayGrabSound()
-    local s = Instance.new("Sound")
-    s.SoundId = "rbxassetid://140207837688369"
-    s.Volume = 1
-    s.Parent = workspace
-    s:Play()
-    task.wait(3)
-    s:Destroy()
+    local sound = Instance.new("Sound")
+    sound.SoundId = "rbxassetid://140207837688369"
+    sound.Volume = 1
+    sound.PlaybackSpeed = 1
+    sound.Parent = workspace
+    sound:Play()
+    task.spawn(function()
+        task.wait(3)
+        sound:Destroy()
+    end)
 end
+
+-- Исправляем mouse1click если его нет
+if not _G.mouse1click then
+    _G.mouse1click = function()
+        local player = game.Players.LocalPlayer
+        local mouse = player and player:GetMouse()
+        if mouse then
+            pcall(function()
+                mouse.Button1Down:Fire()
+            end)
+        end
+    end
+end
+
+local mouse1click = _G.mouse1click
+
+-- Отлавливаем захват через GrabParts
+workspace.ChildAdded:Connect(function(Child)
+    if Child.Name == "GrabParts" then
+        task.wait(0.1)
+        local GrabPart = Child:FindFirstChild("GrabPart")
+        if GrabPart then
+            local WeldConstraint = GrabPart:FindFirstChild("WeldConstraint")
+            if WeldConstraint and WeldConstraint.Part1 then
+                local part1 = WeldConstraint.Part1
+                if part1 and part1.Parent and part1.Parent:FindFirstChild("Humanoid") then
+                    PlayGrabSound()
+                end
+            end
+        end
+    end
+end)
 
 local player = game.Players.LocalPlayer
 local camera = workspace.CurrentCamera
