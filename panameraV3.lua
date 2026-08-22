@@ -1,3 +1,13 @@
+-- ЗВУК ПРИ ЗАХВАТЕ
+local function PlayGrabSound()
+    local s = Instance.new("Sound")
+    s.SoundId = "rbxassetid://140207837688369"
+    s.Volume = 1
+    s.Parent = workspace
+    s:Play()
+    task.wait(3)
+    s:Destroy()
+end
 
 local player = game.Players.LocalPlayer
 local camera = workspace.CurrentCamera
