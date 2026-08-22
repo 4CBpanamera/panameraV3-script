@@ -1,3 +1,55 @@
+-- ============================================
+-- ЗВУК ПРИ ЗАХВАТЕ ИГРОКА (FIXED)
+-- ============================================
+local GRAB_SOUND_ID = "140207837688369"
+local GRAB_VOLUME = 1
+local GRAB_SPEED = 1
+
+local function PlayGrabSound()
+    local player = game.Players.LocalPlayer
+    if not player then return end
+    
+    -- Создаем звук
+    local sound = Instance.new("Sound")
+    sound.SoundId = "rbxassetid://" .. tostring(GRAB_SOUND_ID)
+    sound.Volume = GRAB_VOLUME
+    sound.PlaybackSpeed = GRAB_SPEED
+    
+    -- Находим родителя
+    local parent = player:FindFirstChild("Backpack") 
+    if not parent then
+        parent = player:FindFirstChild("Character")
+    end
+    if not parent then
+        parent = workspace
+    end
+    
+    sound.Parent = parent
+    sound:Play()
+    
+    -- Авто-удаление
+    task.spawn(function()
+        task.wait(3)
+        if sound and sound.Parent then
+            sound:Destroy()
+        end
+    end)
+end
+
+-- ============================================
+-- ПЕРЕОПРЕДЕЛЯЕМ mouse1click (если не существует)
+-- ============================================
+if not mouse1click then
+    local function mouse1click()
+        local player = game.Players.LocalPlayer
+        local mouse = player and player:GetMouse()
+        if mouse then
+            mouse.Button1Down:Fire()
+        end
+    end
+    _G.mouse1click = mouse1click
+end
+
 local player = game.Players.LocalPlayer
 local camera = workspace.CurrentCamera
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -139,30 +191,6 @@ local espFolder = Instance.new("Folder")
 espFolder.Name = "PANAMERA_ESP"
 espFolder.Parent = game.CoreGui
 local espElements = {}
-
--- ============================================
--- ЗВУК ПРИ ЗАХВАТЕ ИГРОКА
--- ============================================
-local GRAB_SOUND_ID = "140207837688369"
-local GRAB_VOLUME = 1
-local GRAB_SPEED = 1
-
-local function PlayGrabSound()
-    local player = game.Players.LocalPlayer
-    if not player then return end
-    
-    local sound = Instance.new("Sound")
-    sound.SoundId = "rbxassetid://" .. tostring(GRAB_SOUND_ID)
-    sound.Volume = GRAB_VOLUME
-    sound.PlaybackSpeed = GRAB_SPEED
-    sound.Parent = player:FindFirstChild("Backpack") or player:FindFirstChild("Character") or workspace
-    sound:Play()
-    
-    task.spawn(function()
-        task.wait(sound.TimeLength or 3)
-        sound:Destroy()
-    end)
-end
 
 -- ============================================
 -- АНЧОРИК
