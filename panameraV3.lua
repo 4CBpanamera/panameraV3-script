@@ -141,15 +141,32 @@ espFolder.Name = "PANAMERA_ESP"
 espFolder.Parent = game.CoreGui
 local espElements = {}
 
--- Простой звук при захвате
-local function PlayGrabSound()
-    local sound = Instance.new("Sound")
-    sound.SoundId = "rbxassetid://140207837688369"
-    sound.Volume = 1
-    sound.PlaybackSpeed = 1
-    sound.Parent = game:GetService("Workspace")
-    sound:Play()
-    game:GetService("Debris"):AddItem(sound, 3)
+local function performGrab()
+    if hasGrabbed or isWaitingForReset then return false end
+    local targetPlayer, hitPart = getPlayerAtCenter()
+    if targetPlayer and hitPart then
+        local char = player.Character
+        if char then
+            local root = char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso")
+            if root and (root.Position - hitPart.Position).Magnitude <= 29 then
+                -- Имитация клика мышкой
+                local mouse = player:GetMouse()
+                if mouse and mouse.Button1Down then
+                    mouse.Button1Down:Fire()
+                end
+                
+                hasGrabbed = true
+                grabbedPlayer = targetPlayer
+                isWaitingForReset = true
+                
+                -- ВОТ ЗДЕСЬ ВЫЗЫВАЕМ ЗВУК
+                PlayGrabSound()
+                
+                return true
+            end
+        end
+    end
+    return false
 end
 
 -- ============================================
