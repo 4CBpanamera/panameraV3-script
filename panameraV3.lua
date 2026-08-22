@@ -137,8 +137,6 @@ espFolder.Name = "PANAMERA_ESP"
 espFolder.Parent = game.CoreGui
 local espElements = {}
 
--- ANCHOR
-local AnchoredObjects = {}
 
 -- ============================================
 -- ВСЕ ВИЗУАЛЫ (СТАНДАРТНЫЙ FF)
