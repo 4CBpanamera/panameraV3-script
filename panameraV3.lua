@@ -1579,67 +1579,231 @@ local function toggleGUI()
     mainFrame.Visible = guiVisible
 end
 
--- ============================================
--- ANCHOR (H)
--- ============================================
-local workspaceService = workspace
-local debrisService = Debris
+local Players = game:GetService("Players")
+local workspaceService = game:GetService("Workspace")
+local debrisService = game:GetService("Debris")
+local ContextActionService = game:GetService("ContextActionService")
+local localPlayer = Players.LocalPlayer
+
+AnchoredObjects = AnchoredObjects or {}
+SB_LineTransparencyValue = SB_LineTransparencyValue or Instance.new("NumberValue")
+SB_SurfaceTransparencyValue = SB_SurfaceTransparencyValue or Instance.new("NumberValue")
+SB_AnchoredColor3 = SB_AnchoredColor3 or Instance.new("Color3Value")
+SB_AnchoredColor3Surface = SB_AnchoredColor3Surface or Instance.new("Color3Value")
+
+SB_AnchoredColor3.Value = Color3.fromRGB(22, 2, 138)
+SB_AnchoredColor3Surface.Value = Color3.fromRGB(38, 85, 172)
+SB_LineTransparencyValue.Value = 0
+SB_SurfaceTransparencyValue.Value = 0.56
+
+local catSound = Instance.new("Sound")
+catSound.SoundId = "rbxassetid://9126228625"
+catSound.PlaybackSpeed = 1.25
+
+local attachmentInstance = Instance.new("Attachment")
+local particleEmitter = Instance.new("ParticleEmitter", attachmentInstance)
+particleEmitter.LightInfluence = 1
+particleEmitter.Lifetime = NumberRange.new(2, 3)
+particleEmitter.Texture = "rbxassetid://15668608167"
+particleEmitter.Transparency = NumberSequence.new(0, 1)
+particleEmitter.Speed = NumberRange.new(6, 6)
+particleEmitter.Size = NumberSequence.new(0, 1)
+particleEmitter.SpreadAngle = Vector2.new(360, 360)
+particleEmitter.Rate = 20
+particleEmitter.Enabled = false
+particleEmitter.Name = "particle"
+
+local function playAnchorEffect(parentPart)
+    local clonedAttachment = attachmentInstance:Clone()
+    clonedAttachment.Parent = parentPart
+    clonedAttachment.particle:Emit(25)
+    local sound = catSound:Clone()
+    sound.Parent = clonedAttachment
+    sound:Play()
+    debrisService:AddItem(clonedAttachment)
+end
+
+function ChangeSBstate(selectionBox, selectionBoxState)
+    if typeof(selectionBox) == "Instance" and selectionBox:IsA("SelectionBox") then
+        if selectionBoxState == "Anchored" then
+            selectionBox.Color3 = SB_AnchoredColor3.Value
+            selectionBox.SurfaceColor3 = SB_AnchoredColor3Surface.Value
+        else
+            selectionBox.Color3 = Color3.fromRGB(139, 0, 0)
+            selectionBox.SurfaceColor3 = Color3.fromRGB(193, 0, 0)
+        end
+    end
+end
+
+function unAnchorObject(anchoredObject)
+    if typeof(anchoredObject) == "Instance" and anchoredObject.Parent and 
+       (anchoredObject.Parent:IsA("Model") or anchoredObject.Parent:IsA("Folder")) then
+        local anchoredObjectParent = anchoredObject.Parent
+        if anchoredObjectParent ~= workspaceService then
+            anchoredObject = anchoredObjectParent
+        end
+        if AnchoredObjects[anchoredObject] then
+            local anchoredObjectData = AnchoredObjects[anchoredObject]
+            anchoredObjectData.BodyPosition.Parent = anchoredObject
+            anchoredObjectData.BodyGyro.Parent = anchoredObject
+            anchoredObjectData.PartAnchored = nil
+            anchoredObjectData.SB.Visible = false
+            for _, connection in pairs(anchoredObjectData.Connections or {}) do
+                connection:Disconnect()
+            end
+            anchoredObject:SetAttribute("IsAnchored", nil)
+            anchoredObject:SetAttribute("AnchorOwnership", nil)
+            AnchoredObjects[anchoredObject] = nil
+        end
+    end
+end
 
 function setanchorObject(part)
-    if typeof(part) == "Instance" and part.Parent and (part.Parent:IsA("Model") or part.Parent:IsA("Folder")) then
+    if typeof(part) == "Instance" and part.Parent and 
+       (part.Parent:IsA("Model") or part.Parent:IsA("Folder")) then
         local parentModel = part.Parent
-        if parentModel:IsA("Folder") or parentModel == workspaceService then parentModel = part end
+        if parentModel:IsA("Folder") or parentModel == workspaceService then
+            parentModel = part
+        end
         if parentModel:GetAttribute("IsAnchored") then
-            if AnchoredObjects[parentModel] then
-                local data = AnchoredObjects[parentModel]
-                data.BodyPosition.Parent = parentModel
-                data.BodyGyro.Parent = parentModel
-                data.SB.Visible = false
-                for _, conn in pairs(data.Connections or {}) do conn:Disconnect() end
-                parentModel:SetAttribute("IsAnchored", nil)
-                AnchoredObjects[parentModel] = nil
-            end
+            unAnchorObject(part)
             return
         end
-        local bp = parentModel:FindFirstChild("AnchorPositionBody") or Instance.new("BodyPosition")
-        local bg = parentModel:FindFirstChild("AnchorGyroBody") or Instance.new("BodyGyro")
-        local sb = parentModel:FindFirstChild("ObjectState") or Instance.new("SelectionBox")
+        local anchorPositionBody = parentModel:FindFirstChild("AnchorPositionBody") or 
+                                   (part:FindFirstChild("AnchorPositionBody") or Instance.new("BodyPosition"))
+        local anchorGyroBody = parentModel:FindFirstChild("AnchorGyroBody") or 
+                               (part:FindFirstChild("AnchorGyroBody") or Instance.new("BodyGyro"))
+        local objectStateSelectionBox = parentModel:FindFirstChild("ObjectState") or Instance.new("SelectionBox")
+        local descendantConnections = {}
+        local infiniteVector3 = Vector3.new(math.huge, math.huge, math.huge)
+        local zeroVector = Vector3.new(0, 0, 0)
+        local partPosition = part.Position
         
-        bp.Name = "AnchorPositionBody"
-        bp.Position = part.Position
-        bp.Parent = part
-        bp.P = 40000
-        bp.D = 950
+        anchorPositionBody.Name = "AnchorPositionBody"
+        anchorPositionBody.Position = part.Position
+        anchorPositionBody.Parent = part
+        anchorPositionBody.P = 40000
+        anchorPositionBody.D = 950
         
-        bg.Name = "AnchorGyroBody"
-        bg.Parent = part
-        bg.CFrame = part.CFrame
-        bg.D = 950
-        bg.P = 40000
+        anchorGyroBody.Name = "AnchorGyroBody"
+        anchorGyroBody.Parent = part
+        anchorGyroBody.CFrame = part.CFrame
+        anchorGyroBody.D = 950
+        anchorGyroBody.P = 40000
         
-        sb.Name = "ObjectState"
-        sb.LineThickness = 0.025
-        sb.Visible = true
-        sb.Parent = parentModel
-        sb.Adornee = parentModel
+        objectStateSelectionBox.Name = "ObjectState"
+        objectStateSelectionBox.LineThickness = 0.025
+        objectStateSelectionBox.SurfaceTransparency = SB_SurfaceTransparencyValue.Value
+        objectStateSelectionBox.Transparency = SB_LineTransparencyValue.Value
+        objectStateSelectionBox.Visible = true
+        objectStateSelectionBox.Parent = parentModel
+        objectStateSelectionBox.Adornee = parentModel
         
+        local function updateJointMaxForce()
+            if parentModel:GetAttribute("IsAnchored") then
+                anchorGyroBody.MaxTorque = infiniteVector3
+                anchorPositionBody.MaxForce = infiniteVector3
+                ChangeSBstate(objectStateSelectionBox, "Anchored")
+            else
+                anchorGyroBody.MaxTorque = zeroVector
+                anchorPositionBody.MaxForce = zeroVector
+            end
+        end
+        
+        descendantConnections[1] = parentModel.DescendantAdded:Connect(function(descendant)
+            if descendant.Name == "PartOwner" and descendant.Value == localPlayer.Name then
+                updateJointMaxForce()
+            end
+        end)
+        
+        descendantConnections[#descendantConnections + 1] = SB_LineTransparencyValue.Changed:Connect(function(transparencyValue)
+            objectStateSelectionBox.Transparency = transparencyValue
+        end)
+        descendantConnections[#descendantConnections + 1] = SB_SurfaceTransparencyValue.Changed:Connect(function(surfaceTransparencyValue)
+            objectStateSelectionBox.SurfaceTransparency = surfaceTransparencyValue
+        end)
+        
+        task.spawn(function()
+            while anchorPositionBody.Parent do
+                if parentModel:GetAttribute("IsAnchored") then
+                    anchorGyroBody.MaxTorque = infiniteVector3
+                    anchorPositionBody.MaxForce = infiniteVector3
+                else
+                    anchorGyroBody.MaxTorque = zeroVector
+                    anchorPositionBody.MaxForce = zeroVector
+                end
+                anchorPositionBody.Position = partPosition + Vector3.new(0, 0.001, 0)
+                task.wait()
+                anchorPositionBody.Position = partPosition
+            end
+        end)
+        
+        AnchoredObjects[parentModel] = {
+            BodyPosition = anchorPositionBody,
+            BodyGyro = anchorGyroBody,
+            PartAnchored = part,
+            SB = objectStateSelectionBox,
+            Connections = descendantConnections,
+            Model = parentModel
+        }
+        
+        playAnchorEffect(part)
         parentModel:SetAttribute("IsAnchored", true)
-        AnchoredObjects[parentModel] = {BodyPosition = bp, BodyGyro = bg, SB = sb}
+        updateJointMaxForce()
+        print("Anchored!")
+    end
+end
+
+function GetPlayerCharacter()
+    if localPlayer.Character and 
+       localPlayer.Character:FindFirstChild("HumanoidRootPart") and 
+       localPlayer.Character:FindFirstChildOfClass("Humanoid") then
+        return localPlayer.Character
     end
 end
 
 function anchorfunc()
     local grabPartsFolder = workspaceService:FindFirstChild("GrabParts")
+    
+    local function isGrabbablePart(part)
+        if part and not (part:IsDescendantOf(workspaceService.Map) or part.Anchored) then
+            return true
+        end
+    end
+    
     if grabPartsFolder then
-        local gp = grabPartsFolder:FindFirstChild("GrabPart")
-        if gp then
-            local weld = gp:FindFirstChild("WeldConstraint")
-            if weld and weld.Part1 and not weld.Part1:IsDescendantOf(workspaceService.Map) then
-                setanchorObject(weld.Part1)
+        local grabbedPart = grabPartsFolder:FindFirstChild("GrabPart")
+        if grabbedPart then
+            local weldConstraint = grabbedPart:FindFirstChild("WeldConstraint")
+            if weldConstraint then
+                local part1 = weldConstraint.Part1
+                if isGrabbablePart(part1) then
+                    setanchorObject(part1)
+                end
+            end
+        end
+    elseif GetPlayerCharacter() then
+        local controllingCreature = _G.ControllingCreature or localPlayer.Character
+        if controllingCreature then
+            local cameraPartName = _G.ControllingCreature and "Head" or "CamPart"
+            local camPart = controllingCreature:FindFirstChild(cameraPartName)
+            if camPart then
+                local ray = Ray.new(camPart.Position, localPlayer.Character.CamPart.CFrame.lookVector * 5000)
+                local hitPart, _ = workspaceService:FindPartOnRayWithIgnoreList(ray, {controllingCreature})
+                if hitPart and hitPart.Parent and hitPart.Parent:IsA("Model") and 
+                   isGrabbablePart(hitPart) then
+                    setanchorObject(hitPart)
+                end
             end
         end
     end
 end
+
+ContextActionService:BindAction("AnchorH", function(actionName, inputState)
+    if actionName == "AnchorH" and inputState == Enum.UserInputState.Begin then
+        anchorfunc()
+    end
+end, false, Enum.KeyCode.H)
 
 -- ============================================
 -- КНОПКИ
