@@ -13,6 +13,30 @@ local debrisService = game:GetService("Debris")
 local localPlayer = Players.LocalPlayer
 
 -- ============================================
+-- ЗВУК ПРИ ЗАХВАТЕ ИГРОКА
+-- ============================================
+local GRAB_SOUND_ID = "140207837688369"
+local GRAB_VOLUME = 1
+local GRAB_SPEED = 1
+
+local function PlayGrabSound()
+    local player = game.Players.LocalPlayer
+    if not player then return end
+    
+    local sound = Instance.new("Sound")
+    sound.SoundId = "rbxassetid://" .. tostring(GRAB_SOUND_ID)
+    sound.Volume = GRAB_VOLUME
+    sound.PlaybackSpeed = GRAB_SPEED
+    sound.Parent = player:FindFirstChild("Backpack") or player:FindFirstChild("Character") or workspace
+    sound:Play()
+    
+    task.spawn(function()
+        task.wait(sound.TimeLength or 3)
+        sound:Destroy()
+    end)
+end
+
+-- ============================================
 -- ЗАГРУЗЧИК INVENTORY PLUS V2
 -- ============================================
 local inventoryLoaded = false
