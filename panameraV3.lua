@@ -178,17 +178,10 @@ local thirdPersonConnection = nil
 local jerkOffTrack = nil
 local jerkOffLoop = nil
 
-local autoGrabEnabled = false
-local hasGrabbed = false
-local grabbedPlayer = nil
-local isWaitingForReset = false
-local autoGrabConnection = nil
-
 local espFolder = Instance.new("Folder")
 espFolder.Name = "PANAMERA_ESP"
 espFolder.Parent = game.CoreGui
 local espElements = {}
-
 
 -- ============================================
 -- АНЧОРИК
@@ -1769,84 +1762,6 @@ local function toggleAntiLag()
     end
 end
 
--- ============================================
--- АВТОГРАБ (Q - вкл, F - сброс)
--- ============================================
-local function getPlayerAtCenter()
-    if not player.Character then return nil, nil end
-    local params = RaycastParams.new()
-    params.FilterDescendantsInstances = {player.Character}
-    params.FilterType = Enum.RaycastFilterType.Blacklist
-    local size = camera.ViewportSize
-    local center = Vector2.new(size.X / 2, size.Y / 2)
-    local ray = camera:ViewportPointToRay(center.X, center.Y)
-    local result = workspace:Raycast(ray.Origin, ray.Direction * 29, params)
-    if result then
-        local hit = result.Instance
-        local char = hit:FindFirstAncestorOfClass("Model")
-        if char then
-            local target = game.Players:GetPlayerFromCharacter(char)
-            if target and target ~= player then return target, hit end
-        end
-    end
-    return nil, nil
-end
-
-local function performGrab()
-    if hasGrabbed or isWaitingForReset then return false end
-    local targetPlayer, hitPart = getPlayerAtCenter()
-    if targetPlayer and hitPart then
-        local char = player.Character
-        if char then
-            local root = char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso")
-            if root and (root.Position - hitPart.Position).Magnitude <= 29 then
-                local mouse = player:GetMouse()
-                mouse1click()
-                hasGrabbed = true
-                grabbedPlayer = targetPlayer
-                isWaitingForReset = true
-                return true
-            end
-        end
-    end
-    return false
-end
-
-local function resetGrab()
-    if hasGrabbed or isWaitingForReset then
-        hasGrabbed = false
-        grabbedPlayer = nil
-        isWaitingForReset = false
-        return true
-    end
-    return false
-end
-
-local function toggleAutoGrab()
-    autoGrabEnabled = not autoGrabEnabled
-    if autoGrabEnabled then
-        hasGrabbed = false
-        grabbedPlayer = nil
-        isWaitingForReset = false
-        autoGrabConnection = RunService.Heartbeat:Connect(function()
-            if not autoGrabEnabled then return end
-            if not player.Character or not player.Character:FindFirstChild("Humanoid") or player.Character.Humanoid.Health <= 0 then
-                hasGrabbed = false
-                grabbedPlayer = nil
-                isWaitingForReset = false
-                return
-            end
-            if hasGrabbed or isWaitingForReset then return end
-            performGrab()
-        end)
-    else
-        if autoGrabConnection then autoGrabConnection:Disconnect(); autoGrabConnection = nil end
-        hasGrabbed = false
-        grabbedPlayer = nil
-        isWaitingForReset = false
-    end
-end
-
 local function toggleGUI()
     guiVisible = not guiVisible
     mainFrame.Visible = guiVisible
@@ -1874,8 +1789,6 @@ UserInputService.InputBegan:Connect(function(input, processed)
     elseif input.KeyCode == Enum.KeyCode.L then toggleGUI()
     elseif input.KeyCode == Enum.KeyCode.Tab then switchTab(currentPage == 1 and 2 or currentPage == 2 and 3 or 1)
     elseif input.KeyCode == Enum.KeyCode.G then toggleJerkOff()
-    elseif input.KeyCode == Enum.KeyCode.Q then toggleAutoGrab()
-    elseif input.KeyCode == Enum.KeyCode.F then resetGrab()
     elseif input.KeyCode == Enum.KeyCode.H then anchorfunc()
     end
 end)
@@ -1892,11 +1805,6 @@ player.CharacterAdded:Connect(function()
         local target = scripts and scripts:FindFirstChild("CharacterAndBeamMove")
         if target then target.Disabled = true end
     end
-    hasGrabbed = false
-    grabbedPlayer = nil
-    isWaitingForReset = false
 end)
-
-
 
 print("loaded successfully!")
