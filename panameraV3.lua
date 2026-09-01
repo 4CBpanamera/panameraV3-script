@@ -105,27 +105,27 @@ if oceanFolder then
     destroyOceans(oceanFolder)
 end
 
--- Запоминаем свой ник(тут спавн паллет йо)
+-- Запоминаем свой ник(тута покраска паллеток!)
 local myName = game.Players.LocalPlayer.Name
 
--- Функция покраски только своих паллет
+
 local function paintMyPallets()
     for _, obj in ipairs(game.Workspace:GetDescendants()) do
         if obj.Name == "PalletLightBrown" and obj:IsA("Model") then
-            -- Проверяем, есть ли твой ник в названии или атрибутах
+           
             local isMine = false
             
-            -- Вариант 1: если ты спавнишь с добавлением ника в имя
+           
             if string.find(obj.Name, myName) then
                 isMine = true
             end
             
-            
+          
             if obj:GetAttribute("Owner") == myName then
                 isMine = true
             end
             
-            
+           
             if obj.Parent and string.find(obj.Parent.Name, myName) then
                 isMine = true
             end
@@ -134,7 +134,9 @@ local function paintMyPallets()
             if isMine then
                 for _, part in ipairs(obj:GetDescendants()) do
                     if part:IsA("BasePart") then
-                        part.BrickColor = BrickColor.new("Black")
+                        part.Color = Color3.fromRGB(0, 0, 0)  
+                        part.Material = Enum.Material.Plastic
+                        part.Reflectance = 0
                     end
                 end
                 
@@ -145,6 +147,7 @@ end
 
 
 paintMyPallets()
+
 
 game.Workspace.ChildAdded:Connect(function(child)
     if child.Name == "PalletLightBrown" then
@@ -160,6 +163,7 @@ game.Workspace.DescendantAdded:Connect(function(desc)
         paintMyPallets()
     end
 end)
+
 
 
 
