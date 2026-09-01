@@ -105,53 +105,63 @@ if oceanFolder then
     destroyOceans(oceanFolder)
 end
 
--- ============================================
--- ПЕРЕКРАШИВАНИЕ ПАЛЛЕТ В ЧЕРНЫЙ
--- ============================================
-local function applyNearBlackEffect(model)
-    for _, part in ipairs(model:GetDescendants()) do
-        if part:IsA("BasePart") then
-            part.Color = Color3.fromRGB(15, 15, 15)
-            part.Material = Enum.Material.Plastic
-            part.Reflectance = 0
+-- Запоминаем свой ник(тут спавн паллет йо)
+local myName = game.Players.LocalPlayer.Name
+
+-- Функция покраски только своих паллет
+local function paintMyPallets()
+    for _, obj in ipairs(game.Workspace:GetDescendants()) do
+        if obj.Name == "PalletLightBrown" and obj:IsA("Model") then
+            -- Проверяем, есть ли твой ник в названии или атрибутах
+            local isMine = false
+            
+            -- Вариант 1: если ты спавнишь с добавлением ника в имя
+            if string.find(obj.Name, myName) then
+                isMine = true
+            end
+            
+            
+            if obj:GetAttribute("Owner") == myName then
+                isMine = true
+            end
+            
+            
+            if obj.Parent and string.find(obj.Parent.Name, myName) then
+                isMine = true
+            end
+            
+            
+            if isMine then
+                for _, part in ipairs(obj:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        part.BrickColor = BrickColor.new("Black")
+                    end
+                end
+                print("[+] Паллета " .. obj.Name .. " покрашена (твоя)")
+            end
         end
     end
 end
 
-local ePressed = false
-local ePressTime = 0
 
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if input.KeyCode == Enum.KeyCode.E then
-        ePressed = true
-        ePressTime = tick()
-        task.wait(1)
-        if ePressed then
-            ePressed = false
-        end
+paintMyPallets()
+
+game.Workspace.ChildAdded:Connect(function(child)
+    if child.Name == "PalletLightBrown" then
+        task.wait(0.2) 
+        paintMyPallets() 
     end
 end)
 
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        if ePressed and (tick() - ePressTime) < 1 then
-            _G.mySpawn = true
-            _G.mySpawnTime = tick()
-            ePressed = false
-            task.wait(0.5)
-            _G.mySpawn = false
-        end
+
+game.Workspace.DescendantAdded:Connect(function(desc)
+    if desc.Name == "PalletLightBrown" then
+        task.wait(0.2)
+        paintMyPallets()
     end
 end)
 
-workspace.DescendantAdded:Connect(function(descendant)
-    if descendant:IsA("Model") and descendant.Name == "PalletLightBrown" then
-        task.wait(0.1)
-        if _G.mySpawn and (tick() - _G.mySpawnTime) < 0.6 then
-            applyNearBlackEffect(descendant)
-        end
-    end
-end)
+
 
 -- ============================================
 -- ПЕРЕМЕННЫЕ
