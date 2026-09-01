@@ -137,7 +137,7 @@ local function paintMyPallets()
                         part.BrickColor = BrickColor.new("Black")
                     end
                 end
-                print("[+] Паллета " .. obj.Name .. " покрашена (твоя)")
+                
             end
         end
     end
