@@ -15,7 +15,6 @@ local function PlayGrabSound()
     end)
 end
 
--- Исправляем mouse1click если его нет
 if not _G.mouse1click then
     _G.mouse1click = function()
         local player = game.Players.LocalPlayer
@@ -30,7 +29,6 @@ end
 
 local mouse1click = _G.mouse1click
 
--- Отлавливаем захват через GrabParts
 workspace.ChildAdded:Connect(function(Child)
     if Child.Name == "GrabParts" then
         task.wait(0.1)
@@ -105,57 +103,36 @@ if oceanFolder then
     destroyOceans(oceanFolder)
 end
 
--- Запоминаем свой ник(тута покраска паллеток!)
 local myName = game.Players.LocalPlayer.Name
-
 
 local function paintMyPallets()
     for _, obj in ipairs(game.Workspace:GetDescendants()) do
         if obj.Name == "PalletLightBrown" and obj:IsA("Model") then
-           
             local isMine = false
-            
-           
-            if string.find(obj.Name, myName) then
-                isMine = true
-            end
-            
-          
-            if obj:GetAttribute("Owner") == myName then
-                isMine = true
-            end
-            
-           
-            if obj.Parent and string.find(obj.Parent.Name, myName) then
-                isMine = true
-            end
-            
-            
+            if string.find(obj.Name, myName) then isMine = true end
+            if obj:GetAttribute("Owner") == myName then isMine = true end
+            if obj.Parent and string.find(obj.Parent.Name, myName) then isMine = true end
             if isMine then
                 for _, part in ipairs(obj:GetDescendants()) do
                     if part:IsA("BasePart") then
-                        part.Color = Color3.fromRGB(0, 0, 0)  
+                        part.Color = Color3.fromRGB(0, 0, 0)
                         part.Material = Enum.Material.Plastic
                         part.Reflectance = 0
                     end
                 end
-                
             end
         end
     end
 end
 
-
 paintMyPallets()
-
 
 game.Workspace.ChildAdded:Connect(function(child)
     if child.Name == "PalletLightBrown" then
-        task.wait(0.2) 
-        paintMyPallets() 
+        task.wait(0.2)
+        paintMyPallets()
     end
 end)
-
 
 game.Workspace.DescendantAdded:Connect(function(desc)
     if desc.Name == "PalletLightBrown" then
@@ -163,9 +140,6 @@ game.Workspace.DescendantAdded:Connect(function(desc)
         paintMyPallets()
     end
 end)
-
-
-
 
 -- ============================================
 -- ПЕРЕМЕННЫЕ
@@ -421,7 +395,7 @@ ContextActionService:BindAction("AnchorH", function(actionName, inputState)
 end, false, Enum.KeyCode.H)
 
 -- ============================================
--- ВСЕ ВИЗУАЛЫ (СТАНДАРТНЫЙ FF)
+-- ВИЗУАЛЫ
 -- ============================================
 local Visuals = {}
 
@@ -474,7 +448,6 @@ Visuals.SkyboxAssets = {
     ["Roblox Default"]={Bk="rbxasset://textures/sky/sky512_bk.tex",Dn="rbxasset://textures/sky/sky512_dn.tex",Ft="rbxasset://textures/sky/sky512_ft.tex",Lf="rbxasset://textures/sky/sky512_lf.tex",Rt="rbxasset://textures/sky/sky512_rt.tex",Up="rbxasset://textures/sky/sky512_up.tex"},
 }
 
--- HAT
 function Visuals.removeHat(c) local h=Visuals.HatParts[c]; if h then h:Destroy(); Visuals.HatParts[c]=nil end end
 function Visuals.addHat(c) task.wait(0.1); local head=c and c:FindFirstChild("Head"); if not head then return end; Visuals.removeHat(c); local hat=Instance.new("Part"); hat.Name="Hat"; hat.Transparency=Visuals.HatTransparency; hat.Color=Visuals.HatColor; hat.Material=Enum.Material.Neon; hat.CanCollide=false; hat.CanTouch=false; hat.CanQuery=false; hat.Massless=true; local m=Instance.new("SpecialMesh"); m.MeshId="rbxassetid://1033714"; m.Scale=Vector3.new(2.4,1.6,2.4); m.Parent=hat; local w=Instance.new("WeldConstraint"); w.Part0=head; w.Part1=hat; w.Parent=hat; hat.CFrame=head.CFrame*CFrame.new(0,1.1,0); hat.Parent=c; Visuals.HatParts[c]=hat end
 function Visuals.updateHats() 
@@ -486,7 +459,6 @@ function Visuals.updateHats()
     end 
 end
 
--- TRAIL
 function Visuals.removeTrail(c) if Visuals.TrailParts[c] then Visuals.TrailParts[c]:Destroy(); Visuals.TrailParts[c]=nil end; local t=c and c:FindFirstChild("HumanoidRootPart"); if t then local a0=t:FindFirstChild("TrailAttach0"); local a1=t:FindFirstChild("TrailAttach1"); if a0 then a0:Destroy() end; if a1 then a1:Destroy() end end end
 function Visuals.addTrail(c) local t=c and c:FindFirstChild("HumanoidRootPart"); if not t then return end; Visuals.removeTrail(c); local a0=Instance.new("Attachment"); a0.Name="TrailAttach0"; a0.Position=Vector3.new(0,2,0); a0.Parent=t; local a1=Instance.new("Attachment"); a1.Name="TrailAttach1"; a1.Position=Vector3.new(0,-2,0); a1.Parent=t; local tr=Instance.new("Trail"); tr.Attachment0=a0; tr.Attachment1=a1; tr.Lifetime=Visuals.TrailLifetime; tr.LightEmission=0.2; tr.Enabled=true; tr.Transparency=NumberSequence.new({NumberSequenceKeypoint.new(0,Visuals.TrailTransparencyStart),NumberSequenceKeypoint.new(1,1)}); tr.Color=ColorSequence.new(Color3.fromHSV(0,1,1)); tr.Parent=c; Visuals.TrailParts[c]=tr end
 function Visuals.updateTrails() 
@@ -513,9 +485,8 @@ function Visuals.updateSkinTrail()
     end
 end
 
--- FORCEFIELD
 function Visuals.saveOriginalColors(c) Visuals.OriginalColors[c]={} for _,p in ipairs(c:GetDescendants()) do if p:IsA("BasePart") and p.Name~="Hat" then Visuals.OriginalColors[c][p]={Color=p.Color,Material=p.Material} end end end
-function Visuals.applyForceField(c) Visuals.saveOriginalColors(c); for _,p in ipairs(c:GetDescendants()) do if p:IsA("BasePart") and p.Name~="Hat" then p.Color=Visuals.ForceFieldColor; p.Material=Enum.Material.ForceField end end end
+function Visuals.applyForceField(c) Visuals.saveOriginalColors(c); for _,p in ipairs(c:GetDescendants()) do if p:IsA("BasePart") and p.Name~="Hat" then p.Color=Visuals.ForceFieldColor; p.Material=Enum.Material.ForceField; p.Transparency = Visuals.ForceFieldTransparency end end end
 function Visuals.removeForceField(c) local orig=Visuals.OriginalColors[c]; if not orig then return end; for p,d in pairs(orig) do if p and p.Parent and p:IsA("BasePart") then p.Color=d.Color; p.Material=d.Material end end; Visuals.OriginalColors[c]=nil end
 function Visuals.updateForceField() if not(player.Character and Visuals.ForceFieldEnabled) then return end; for _,p in ipairs(player.Character:GetDescendants()) do if p:IsA("BasePart") and p.Name~="Hat" and p.Material==Enum.Material.ForceField then p.Color=Visuals.ForceFieldColor end end end
 
@@ -526,7 +497,6 @@ function Visuals.setFullBrightEnabled(en) Visuals.FullBrightEnabled=en; if not e
 function Visuals.setScreenEnabled(en) Visuals.ScreenEnabled=en; if en then if Visuals.ScreenConnection then Visuals.ScreenConnection:Disconnect() end; Visuals.ScreenConnection=RunService.RenderStepped:Connect(function() local cam=workspace.CurrentCamera; if cam then cam.CFrame=cam.CFrame*CFrame.new(0,0,0,1,0,0,0,0.65+Visuals.ScreenIntensity,0,0,0,1) end end) elseif Visuals.ScreenConnection then Visuals.ScreenConnection:Disconnect(); Visuals.ScreenConnection=nil end end
 function Visuals.toggleAnimeImage(en) Visuals.AnimeImageEnabled=en; if en then if Visuals.AnimeImageGui then Visuals.AnimeImageGui:Destroy() end; local g=Instance.new("ScreenGui"); g.Name="AnimeImageGui"; g.ResetOnSpawn=false; g.Parent=player:WaitForChild("PlayerGui"); local img=Instance.new("ImageLabel"); img.Name="AnimeImage"; img.Image="http://www.roblox.com/asset/?id=117783035423570"; img.Size=UDim2.new(0,350,0,400); img.Position=UDim2.new(1,-25,0,10); img.AnchorPoint=Vector2.new(1,0); img.BackgroundTransparency=1; img.Parent=g; Visuals.AnimeImageGui=g elseif Visuals.AnimeImageGui then Visuals.AnimeImageGui:Destroy(); Visuals.AnimeImageGui=nil end end
 
--- FIRE AURA
 function Visuals.enableFireAura(c)
     Visuals.disableFireAura()
     if not c then return end
@@ -624,9 +594,6 @@ local titleCorner = Instance.new("UICorner")
 titleCorner.CornerRadius = UDim.new(0, 12)
 titleCorner.Parent = title
 
--- ============================================
--- ТАБЫ
--- ============================================
 local tabsFrame = Instance.new("Frame")
 tabsFrame.Parent = mainFrame
 tabsFrame.BackgroundTransparency = 1
@@ -656,9 +623,6 @@ local tab1 = createTabBtn("MAIN", UDim2.new(0, 5, 0, 5), Color3.fromRGB(150, 0, 
 local tab2 = createTabBtn("DEFENSE", UDim2.new(0.33, 2.5, 0, 5))
 local tab3 = createTabBtn("VISUALS", UDim2.new(0.67, 2.5, 0, 5))
 
--- ============================================
--- СТРАНИЦЫ
--- ============================================
 local page1 = Instance.new("Frame")
 page1.Parent = mainFrame
 page1.BackgroundTransparency = 1
@@ -697,9 +661,6 @@ tab1.MouseButton1Click:Connect(function() switchTab(1) end)
 tab2.MouseButton1Click:Connect(function() switchTab(2) end)
 tab3.MouseButton1Click:Connect(function() switchTab(3) end)
 
--- ============================================
--- СОЗДАНИЕ ЭЛЕМЕНТОВ МЕНЮ
--- ============================================
 local function createItem(parent, name, y)
     local ind = Instance.new("Frame")
     ind.Parent = parent
@@ -741,9 +702,6 @@ local function createItem(parent, name, y)
     return ind, status, btn
 end
 
--- ============================================
--- MAIN TAB
--- ============================================
 local fovInd, fovStatus, fovBtn = createItem(page1, "FOV", 5)
 local tpInd, tpStatus, tpBtn = createItem(page1, "TP", 35)
 local espInd, espStatus, espBtn = createItem(page1, "ESP", 65)
@@ -751,7 +709,6 @@ local ragdollInd, ragdollStatus, ragdollBtn = createItem(page1, "Ragdoll", 95)
 local thirdInd, thirdStatus, thirdBtn = createItem(page1, "3rd Person", 125)
 local timeInd, timeStatus, timeBtn = createItem(page1, "Time", 155)
 
--- ВРЕМЯ
 local timeFrame = Instance.new("Frame")
 timeFrame.Parent = page1
 timeFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
@@ -793,7 +750,6 @@ local function setTime(h, m)
     end
 end
 
--- ЧАС
 local hourLabel = Instance.new("TextLabel")
 hourLabel.Parent = timeFrame
 hourLabel.BackgroundTransparency = 1
@@ -836,7 +792,6 @@ local hbc = Instance.new("UICorner")
 hbc.CornerRadius = UDim.new(0, 6)
 hbc.Parent = hourBtn
 
--- МИНУТА
 local minuteLabel = Instance.new("TextLabel")
 minuteLabel.Parent = timeFrame
 minuteLabel.BackgroundTransparency = 1
@@ -952,9 +907,6 @@ end
 
 timeBtn.MouseButton1Click:Connect(toggleTime)
 
--- ============================================
--- SCREEN STRETCH
--- ============================================
 local stretchIntensity = 100
 local stretchConnection = nil
 
@@ -1028,12 +980,10 @@ local function applyStretch(value)
     if newValue > 100 then newValue = 100 end
     stretchIntensity = newValue
     updateStretchUI()
-    
     if stretchConnection then
         stretchConnection:Disconnect()
         stretchConnection = nil
     end
-    
     local stretch = 0.5 + (stretchIntensity / 100) * 0.5
     stretchConnection = RunService.RenderStepped:Connect(function()
         local cam = workspace.CurrentCamera
@@ -1044,17 +994,10 @@ local function applyStretch(value)
 end
 
 local stretchDragging = false
-
-stretchSliderButton.MouseButton1Down:Connect(function()
-    stretchDragging = true
-end)
-
+stretchSliderButton.MouseButton1Down:Connect(function() stretchDragging = true end)
 UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        stretchDragging = false
-    end
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then stretchDragging = false end
 end)
-
 UserInputService.InputChanged:Connect(function(input)
     if stretchDragging and input.UserInputType == Enum.UserInputType.MouseMovement then
         local mousePos = input.Position.X
@@ -1062,12 +1005,10 @@ UserInputService.InputChanged:Connect(function(input)
         local sliderWidth = stretchSlider.AbsoluteSize.X
         if sliderWidth > 0 then
             local percent = math.clamp((mousePos - sliderPos) / sliderWidth, 0, 1)
-            local value = 5 + percent * 95
-            applyStretch(value)
+            applyStretch(5 + percent * 95)
         end
     end
 end)
-
 stretchSlider.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
         local mousePos = input.Position.X
@@ -1075,8 +1016,7 @@ stretchSlider.InputBegan:Connect(function(input)
         local sliderWidth = stretchSlider.AbsoluteSize.X
         if sliderWidth > 0 then
             local percent = math.clamp((mousePos - sliderPos) / sliderWidth, 0, 1)
-            local value = 5 + percent * 95
-            applyStretch(value)
+            applyStretch(5 + percent * 95)
         end
     end
 end)
@@ -1085,9 +1025,7 @@ local function onCharacterAdded()
     task.wait(0.5)
     applyStretch(stretchIntensity)
 end
-
 player.CharacterAdded:Connect(onCharacterAdded)
-
 applyStretch(100)
 
 local hintLabel1 = Instance.new("TextLabel")
@@ -1096,34 +1034,35 @@ hintLabel1.BackgroundTransparency = 1
 hintLabel1.Position = UDim2.new(0, 10, 0, 335)
 hintLabel1.Size = UDim2.new(0, 280, 0, 75)
 hintLabel1.Font = Enum.Font.GothamBold
-hintLabel1.Text = "[R] FOV  •  [Z] TP  •  [C] Ragdoll\n[V] 3rd Person  •  [L] Hide GUI\n[Tab] Switch Page  •  [O] Zoom"
+hintLabel1.Text = "[R] FOV  •  [Z] TP  •  [C] Ragdoll\n[V] 3rd Person  •  [L] Hide GUI\n[Tab] Switch Page  •  [K] Anti Kick"
 hintLabel1.TextColor3 = Color3.fromRGB(255, 0, 0)
 hintLabel1.TextSize = 12
 hintLabel1.TextWrapped = true
 hintLabel1.ZIndex = 2
 
 -- ============================================
--- DEFENSE TAB (Page 2)
+-- DEFENSE TAB
 -- ============================================
 local antiGrabInd, antiGrabStatus, antiGrabBtn = createItem(page2, "Anti Grab", 5)
 local autoResetInd, autoResetStatus, autoResetBtn = createItem(page2, "Auto Reset", 35)
 local jerkOffInd, jerkOffStatus, jerkOffBtn = createItem(page2, "Jerk Off", 65)
 local antiLagInd, antiLagStatus, antiLagBtn = createItem(page2, "Anti Lag", 95)
+local antiKickInd, antiKickStatus, antiKickBtn = createItem(page2, "Anti Kick", 125)
 
 local hintLabel2 = Instance.new("TextLabel")
 hintLabel2.Parent = page2
 hintLabel2.BackgroundTransparency = 1
-hintLabel2.Position = UDim2.new(0, 10, 0, 125)
-hintLabel2.Size = UDim2.new(0, 280, 0, 130)
+hintLabel2.Position = UDim2.new(0, 10, 0, 155)
+hintLabel2.Size = UDim2.new(0, 280, 0, 140)
 hintLabel2.Font = Enum.Font.GothamBold
-hintLabel2.Text = "Anti Grab - prevents players from\ngrabbing you\n\nAuto Reset - auto respawn when\nkicked for flying\n\nJerk Off - anim\n\nAnti Lag - disables line creation"
+hintLabel2.Text = "Anti Grab - prevents players from\ngrabbing you\n\nAuto Reset - auto respawn when\nkicked for flying\n\nJerk Off - anim\n\nAnti Lag - disables line creation\n\nAnti Kick - hides shuriken in torso"
 hintLabel2.TextColor3 = Color3.fromRGB(255, 0, 0)
-hintLabel2.TextSize = 12
+hintLabel2.TextSize = 11
 hintLabel2.TextWrapped = true
 hintLabel2.ZIndex = 2
 
 -- ============================================
--- VISUALS TAB (Page 3)
+-- VISUALS TAB
 -- ============================================
 local function createVisItem(name, y)
     local ind = Instance.new("Frame")
@@ -1135,7 +1074,6 @@ local function createVisItem(name, y)
     local c = Instance.new("UICorner")
     c.CornerRadius = UDim.new(0, 4)
     c.Parent = ind
-    
     local status = Instance.new("TextLabel")
     status.Parent = page3
     status.BackgroundTransparency = 1
@@ -1147,7 +1085,6 @@ local function createVisItem(name, y)
     status.TextXAlignment = Enum.TextXAlignment.Left
     status.TextSize = 11
     status.ZIndex = 2
-    
     local btn = Instance.new("TextButton")
     btn.Parent = page3
     btn.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
@@ -1162,7 +1099,6 @@ local function createVisItem(name, y)
     local c2 = Instance.new("UICorner")
     c2.CornerRadius = UDim.new(0, 5)
     c2.Parent = btn
-    
     return ind, status, btn
 end
 
@@ -1176,7 +1112,6 @@ local animeInd, animeStatus, animeBtn = createVisItem("Anime Image", 185)
 local screenInd, screenStatus, screenBtn = createVisItem("Screen FX", 215)
 local fireAuraInd, fireAuraStatus, fireAuraBtn = createVisItem("Fire Aura", 245)
 
--- SKYBOX DROPDOWN
 local skyboxLabel = Instance.new("TextLabel")
 skyboxLabel.Parent = page3
 skyboxLabel.BackgroundTransparency = 1
@@ -1216,7 +1151,6 @@ skyboxBtn.MouseButton1Click:Connect(function()
     Visuals.applySkybox(name)
 end)
 
--- FORCEFIELD TRANSPARENCY SLIDER
 local ffTransLabel = Instance.new("TextLabel")
 ffTransLabel.Parent = page3
 ffTransLabel.BackgroundTransparency = 1
@@ -1273,31 +1207,12 @@ ffTransValue.TextXAlignment = Enum.TextXAlignment.Right
 ffTransValue.ZIndex = 2
 
 local ffTransDragging = false
-
 ffTransBtn.MouseButton1Down:Connect(function() ffTransDragging = true end)
 UserInputService.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then ffTransDragging = false end
 end)
 UserInputService.InputChanged:Connect(function(input)
     if ffTransDragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-        local pos = input.Position.X
-        local sPos = ffTransSlider.AbsolutePosition.X
-        local sW = ffTransSlider.AbsoluteSize.X
-        if sW > 0 then
-            local pct = math.clamp((pos - sPos) / sW, 0, 1)
-            local val = math.floor(pct * 100)
-            ffTransFill.Size = UDim2.new(pct, 0, 1, 0)
-            ffTransValue.Text = val .. "%"
-            Visuals.ForceFieldTransparency = val / 100
-            if Visuals.ForceFieldEnabled and player.Character then
-                Visuals.applyForceField(player.Character)
-            end
-        end
-    end
-end)
-
-ffTransSlider.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
         local pos = input.Position.X
         local sPos = ffTransSlider.AbsolutePosition.X
         local sW = ffTransSlider.AbsoluteSize.X
@@ -1455,7 +1370,7 @@ fireAuraBtn.MouseButton1Click:Connect(function()
 end)
 
 -- ============================================
--- ФУНКЦИИ
+-- ФУНКЦИИ MAIN
 -- ============================================
 local function toggleFOV()
     fovEnabled = not fovEnabled
@@ -1587,11 +1502,7 @@ local function activateRagdoll()
                     if hum then
                         local controls = player.PlayerGui:FindFirstChild("ControlsGui")
                         if controls and controls:FindFirstChild("PCFrame") and controls.PCFrame:FindFirstChild("Stand") then
-                            if controls.PCFrame.Stand.Visible == false then
-                                hum.HipHeight = 2
-                            else
-                                hum.HipHeight = 0
-                            end
+                            hum.HipHeight = controls.PCFrame.Stand.Visible == false and 2 or 0
                         end
                     end
                 else
@@ -1782,6 +1693,279 @@ local function toggleGUI()
 end
 
 -- ============================================
+-- ANTI KICK (в отдельном чанке через task.defer)
+-- ============================================
+local toggleAntiKick
+
+task.defer(function()
+    local _active = false
+    local _task = nil
+    local _respawnConn = nil
+    local _remotes = nil
+    
+    local function initRemotes()
+        if _remotes then return _remotes end
+        local RS = game:GetService("ReplicatedStorage")
+        local GE = RS:FindFirstChild("GrabEvents")
+        local PE = RS:FindFirstChild("PlayerEvents")
+        local MT = RS:FindFirstChild("MenuToys")
+        _remotes = {
+            SetNetOwner = GE and GE:FindFirstChild("SetNetworkOwner"),
+            StickyPart = PE and PE:FindFirstChild("StickyPartEvent"),
+            SpawnToy = MT and MT:FindFirstChild("SpawnToyRemoteFunction"),
+            DestroyToy = MT and MT:FindFirstChild("DestroyToy"),
+        }
+        return _remotes
+    end
+    
+    local function getHRP()
+        local plr = game.Players.LocalPlayer
+        if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+            return plr.Character.HumanoidRootPart
+        else
+            local character = plr.CharacterAdded:Wait()
+            return character:WaitForChild("HumanoidRootPart")
+        end
+    end
+    
+    local function CheckForHome()
+        local plr = game.Players.LocalPlayer
+        local plotItems = workspace:FindFirstChild("PlotItems")
+        local playersInPlots = plotItems and plotItems:FindFirstChild("PlayersInPlots")
+        if not playersInPlots or not playersInPlots:FindFirstChild(plr.Name) then return false end
+        local plots = workspace:FindFirstChild("Plots")
+        if not plots then return false end
+        for _, v in pairs(plots:GetChildren()) do
+            local sign = v:FindFirstChild("PlotSign")
+            local owners = sign and sign:FindFirstChild("ThisPlotsOwners")
+            if owners then
+                for _, b in pairs(owners:GetChildren()) do
+                    if b.Value == plr.Name then
+                        local folder = plotItems:FindFirstChild(v.Name)
+                        if folder then return true, folder end
+                    end
+                end
+            end
+        end
+        return false
+    end
+    
+    local function StickShuriken(shuriken)
+        if not shuriken or not shuriken:FindFirstChild("StickyPart") then return end
+        local plr = game.Players.LocalPlayer
+        local R = initRemotes()
+        local currentHRP = getHRP()
+        if not currentHRP then return end
+        
+        if shuriken:FindFirstChild("SoundPart") then
+            if not shuriken.SoundPart:FindFirstChild("PartOwner") or shuriken.SoundPart.PartOwner.Value ~= plr.Name then 
+                R.SetNetOwner:FireServer(shuriken.SoundPart, shuriken.SoundPart.CFrame)
+            end
+        end
+        
+        local firePart = currentHRP:FindFirstChild("FirePlayerPart") or currentHRP:WaitForChild("FirePlayerPart", 5)
+        if firePart then
+            R.StickyPart:FireServer(
+                shuriken.StickyPart, 
+                firePart, 
+                CFrame.new(0,0,0) * CFrame.Angles(0, math.rad(90), math.rad(90))
+            )
+        end
+        
+        for _, obj in pairs(shuriken:GetChildren()) do
+            if obj.Name == "Pyramid" then
+                obj.CanTouch = false
+                obj.CanCollide = false
+                obj.CanQuery = false
+                obj.Transparency = 0
+                if not obj:FindFirstChild("Highlight") then
+                    local high = Instance.new("Highlight", obj)
+                    high.FillColor = Color3.fromRGB(0, 0, 0)
+                end
+            elseif obj.Name == "Main" then
+                obj.CanTouch = false
+                obj.CanCollide = false
+                obj.CanQuery = false
+                obj.Transparency = 0
+                if not obj:FindFirstChild("Highlight") then
+                    local high = Instance.new("Highlight", obj)
+                    high.FillColor = Color3.fromRGB(255, 255, 255)
+                end
+            elseif obj:IsA("BasePart") then
+                obj.CanTouch = false
+                obj.CanCollide = false
+                obj.CanQuery = false
+                obj.Transparency = 1
+            end
+        end
+    end
+    
+    local function SpawnShuriken()
+        local plr = game.Players.LocalPlayer
+        local R = initRemotes()
+        local CanSpawnToy = plr:FindFirstChild("CanSpawnToy")
+        local t = tick()
+        while CanSpawnToy and not CanSpawnToy.Value do
+            if not _active or tick() - t > 5 then return nil end
+            task.wait(0.1)
+        end
+        local currentHRP = getHRP()
+        if currentHRP then
+            task.spawn(function()
+                pcall(function()
+                    R.SpawnToy:InvokeServer("NinjaShuriken", currentHRP.CFrame * CFrame.new(0, 12, 20), Vector3.new(0,0,0))
+                end)
+            end)
+        end
+        local boolik, house = CheckForHome()
+        local inv = workspace:FindFirstChild(plr.Name.."SpawnedInToys")
+        if boolik and house then 
+            return house:WaitForChild("NinjaShuriken", 2)
+        elseif inv and not (workspace.PlotItems and workspace.PlotItems.PlayersInPlots:FindFirstChild(plr.Name)) then 
+            return inv:WaitForChild("NinjaShuriken", 2)
+        end
+        return nil
+    end
+    
+    local function ClearKunai()
+        local plr = game.Players.LocalPlayer
+        local R = initRemotes()
+        local inv = workspace:FindFirstChild(plr.Name .. "SpawnedInToys")
+        if inv then
+            for _, v in pairs(inv:GetChildren()) do
+                if v.Name == "AntiKick" or v.Name == "NinjaShuriken" then
+                    pcall(function() R.DestroyToy:FireServer(v) end)
+                end
+            end
+        end
+        local boolik, house = CheckForHome()
+        if boolik and house then
+            for _, v in pairs(house:GetChildren()) do
+                if v.Name == "AntiKick" or v.Name == "NinjaShuriken" then
+                    pcall(function() R.DestroyToy:FireServer(v) end)
+                end
+            end
+        end
+    end
+    
+    local function startLoop()
+        _task = task.spawn(function()
+            local plr = game.Players.LocalPlayer
+            _G.ShurikenAntiKick = true
+            
+            while _active do 
+                task.wait(0.005)
+                local char = plr.Character
+                if not char or not char:FindFirstChild("Humanoid") or char.Humanoid.Health <= 0 then 
+                    continue 
+                end
+                
+                local plotItems = workspace:FindFirstChild("PlotItems")
+                local playersInPlots = plotItems and plotItems:FindFirstChild("PlayersInPlots")
+                local inPlot = playersInPlots and playersInPlots:FindFirstChild(plr.Name)
+                
+                local inv = workspace:FindFirstChild(plr.Name.."SpawnedInToys")
+                local kunai = inv and inv:FindFirstChild("NinjaShuriken")
+                
+                if inPlot then 
+                    local boolik, house = CheckForHome()
+                    if boolik and house and workspace.Plots:FindFirstChild(house.Name) then
+                        local sign = workspace.Plots[house.Name]:FindFirstChild("PlotSign")
+                        if sign and sign.ThisPlotsOwners.Value.TimeRemainingNum.Value > 89 then 
+                            kunai = SpawnShuriken()
+                            if kunai == nil then continue end
+                            kunai.Name = "AntiKick" 
+                            StickShuriken(kunai)
+                        end
+                    end
+                end
+                
+                if not kunai then
+                    if inPlot then continue end 
+                    kunai = SpawnShuriken()
+                    if kunai == nil then continue end 
+                    kunai.Name = "AntiKick"
+                    if not kunai then continue end 
+                end
+                
+                repeat
+                    if kunai and kunai:FindFirstChild("StickyPart") and kunai.StickyPart.CanTouch == true then
+                        StickShuriken(kunai)
+                        kunai.Name = "AntiKick"
+                    end
+                    task.wait(0.3)
+                until not kunai or not _active 
+                    or not kunai:FindFirstChild("StickyPart") 
+                    or kunai.StickyPart.CanTouch == false 
+                    or not plr.Character 
+                    or not plr.Character:FindFirstChild("HumanoidRootPart") 
+                    or (plr.Character.HumanoidRootPart.Position - kunai.StickyPart.Position).Magnitude >= 20
+                    
+                if not kunai or not kunai:FindFirstChild("StickyPart") 
+                    or not plr.Character 
+                    or not plr.Character:FindFirstChild("HumanoidRootPart") 
+                    or (plr.Character.HumanoidRootPart.Position - kunai.StickyPart.Position).Magnitude >= 20 then 
+                    ClearKunai()
+                end 
+                
+                pcall(function()
+                    repeat task.wait(0.05) until not _active 
+                        or not plr.Character 
+                        or not plr.Character:FindFirstChild("Humanoid") 
+                        or not kunai 
+                        or not kunai:FindFirstChild("StickyPart") 
+                        or not kunai.StickyPart:FindFirstChild("StickyWeld") 
+                        or not kunai.StickyPart.StickyWeld.Part1
+                    if not kunai or not kunai:FindFirstChild("StickyPart") 
+                        or (plr.Character and plr.Character:FindFirstChild("Humanoid") and plr.Character.Humanoid.Health <= 0) 
+                        or not kunai["StickyPart"]:FindFirstChild("StickyWeld").Part1 then 
+                        ClearKunai()
+                    end
+                end)
+            end
+            ClearKunai()
+        end)
+    end
+    
+    local function stopLoop()
+        _active = false
+        _G.ShurikenAntiKick = false
+        if _task then
+            task.cancel(_task)
+            _task = nil
+        end
+        ClearKunai()
+    end
+    
+    toggleAntiKick = function()
+        _active = not _active
+        local plr = game.Players.LocalPlayer
+        
+        if _active then
+            if _respawnConn then _respawnConn:Disconnect() end
+            _respawnConn = plr.CharacterAdded:Connect(function()
+                if _active then task.wait(1) end
+            end)
+            startLoop()
+            antiKickInd.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+            antiKickStatus.Text = "Anti Kick: ON"
+            antiKickBtn.Text = "Disable"
+        else
+            if _respawnConn then _respawnConn:Disconnect() _respawnConn = nil end
+            stopLoop()
+            antiKickInd.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+            antiKickStatus.Text = "Anti Kick: OFF"
+            antiKickBtn.Text = "Anti Kick"
+        end
+    end
+    
+    -- Подключаем кнопку ПОСЛЕ того, как toggleAntiKick готова
+    antiKickBtn.MouseButton1Click:Connect(function()
+        if toggleAntiKick then toggleAntiKick() end
+    end)
+end)
+
+-- ============================================
 -- КНОПКИ
 -- ============================================
 fovBtn.MouseButton1Click:Connect(toggleFOV)
@@ -1804,6 +1988,8 @@ UserInputService.InputBegan:Connect(function(input, processed)
     elseif input.KeyCode == Enum.KeyCode.Tab then switchTab(currentPage == 1 and 2 or currentPage == 2 and 3 or 1)
     elseif input.KeyCode == Enum.KeyCode.G then toggleJerkOff()
     elseif input.KeyCode == Enum.KeyCode.H then anchorfunc()
+    elseif input.KeyCode == Enum.KeyCode.K then 
+        if toggleAntiKick then toggleAntiKick() end 
     end
 end)
 
