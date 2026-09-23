@@ -423,9 +423,6 @@ Visuals.TrailColorStatic=Color3.fromRGB(0,255,255)
 Visuals.TrailGradient1=Color3.fromRGB(0,86,255); Visuals.TrailGradient2=Color3.fromRGB(255,0,0)
 Visuals.TrailParts={}
 Visuals.SkinTrailEnabled=false; Visuals.SkinTrailColor=Color3.fromRGB(255,0,0); Visuals.SkinTrailLife=0.5
-Visuals.ForceFieldEnabled=false; Visuals.ForceFieldColor=Color3.fromRGB(128,128,128)
-Visuals.ForceFieldTransparency=0
-Visuals.OriginalColors={}
 Visuals.WorldTimeEnabled=false; Visuals.WorldTimeValue=12; Visuals.FullBrightEnabled=false
 Visuals.NebulaEnabled=false; Visuals.NebulaThemeColor=Color3.fromRGB(173,216,230)
 Visuals.CurrentSkybox="HD"; Visuals.CustomSkyEnabled=false
@@ -485,11 +482,6 @@ function Visuals.updateSkinTrail()
     end
 end
 
-function Visuals.saveOriginalColors(c) Visuals.OriginalColors[c]={} for _,p in ipairs(c:GetDescendants()) do if p:IsA("BasePart") and p.Name~="Hat" then Visuals.OriginalColors[c][p]={Color=p.Color,Material=p.Material} end end end
-function Visuals.applyForceField(c) Visuals.saveOriginalColors(c); for _,p in ipairs(c:GetDescendants()) do if p:IsA("BasePart") and p.Name~="Hat" then p.Color=Visuals.ForceFieldColor; p.Material=Enum.Material.ForceField; p.Transparency = Visuals.ForceFieldTransparency end end end
-function Visuals.removeForceField(c) local orig=Visuals.OriginalColors[c]; if not orig then return end; for p,d in pairs(orig) do if p and p.Parent and p:IsA("BasePart") then p.Color=d.Color; p.Material=d.Material end end; Visuals.OriginalColors[c]=nil end
-function Visuals.updateForceField() if not(player.Character and Visuals.ForceFieldEnabled) then return end; for _,p in ipairs(player.Character:GetDescendants()) do if p:IsA("BasePart") and p.Name~="Hat" and p.Material==Enum.Material.ForceField then p.Color=Visuals.ForceFieldColor end end end
-
 function Visuals.applySkybox(n) local s=Visuals.SkyboxAssets[n]; if not s then return end; local sky=Lighting:FindFirstChildOfClass("Sky") or Instance.new("Sky",Lighting); sky.Name="Sky"; sky.SkyboxBk=s.Bk; sky.SkyboxDn=s.Dn; sky.SkyboxFt=s.Ft; sky.SkyboxLf=s.Lf; sky.SkyboxRt=s.Rt; sky.SkyboxUp=s.Up end
 function Visuals.restoreDefaultSky() local sky=Lighting:FindFirstChildOfClass("Sky"); if sky and Visuals.DefaultSkySettings.SkyboxBk then sky.SkyboxBk=Visuals.DefaultSkySettings.SkyboxBk; sky.SkyboxDn=Visuals.DefaultSkySettings.SkyboxDn; sky.SkyboxFt=Visuals.DefaultSkySettings.SkyboxFt; sky.SkyboxLf=Visuals.DefaultSkySettings.SkyboxLf; sky.SkyboxRt=Visuals.DefaultSkySettings.SkyboxRt; sky.SkyboxUp=Visuals.DefaultSkySettings.SkyboxUp elseif sky then sky:Destroy() end end
 function Visuals.setNebulaEnabled(en) Visuals.NebulaEnabled=en; if en then local bl=Lighting:FindFirstChild("NebulaBloom") or Instance.new("BloomEffect"); bl.Name="NebulaBloom"; bl.Intensity=0.7; bl.Size=24; bl.Threshold=1; bl.Parent=Lighting; local cc=Lighting:FindFirstChild("NebulaColorCorrection") or Instance.new("ColorCorrectionEffect"); cc.Name="NebulaColorCorrection"; cc.Saturation=0.5; cc.Contrast=0.2; cc.TintColor=Visuals.NebulaThemeColor; cc.Parent=Lighting; local atm=Lighting:FindFirstChild("NebulaAtmosphere") or Instance.new("Atmosphere"); atm.Name="NebulaAtmosphere"; atm.Density=0.4; atm.Offset=0.25; atm.Glare=1; atm.Haze=2; atm.Color=Visuals.NebulaThemeColor; atm.Decay=Color3.fromRGB(173,216,230); atm.Parent=Lighting; Lighting.Ambient=Visuals.NebulaThemeColor; Lighting.OutdoorAmbient=Visuals.NebulaThemeColor; Lighting.FogStart=100; Lighting.FogEnd=500; Lighting.FogColor=Visuals.NebulaThemeColor else for _,nm in ipairs({"NebulaBloom","NebulaColorCorrection","NebulaAtmosphere"}) do local o=Lighting:FindFirstChild(nm); if o then o:Destroy() end end; Lighting.Ambient=Visuals.DefaultLighting.Ambient; Lighting.OutdoorAmbient=Visuals.DefaultLighting.OutdoorAmbient; Lighting.FogStart=Visuals.DefaultLighting.FogStart; Lighting.FogEnd=Visuals.DefaultLighting.FogEnd; Lighting.FogColor=Visuals.DefaultLighting.FogColor end end
@@ -526,7 +518,6 @@ function vReapply(c)
     task.wait(1) 
     if Visuals.HatEnabled then Visuals.addHat(c) end
     if Visuals.TrailEnabled then Visuals.addTrail(c) end
-    if Visuals.ForceFieldEnabled then Visuals.applyForceField(c) end
     if Visuals.SkinTrailEnabled then Visuals.toggleSkinTrail(true) end
     if Visuals.AnimeImageEnabled then Visuals.toggleAnimeImage(true) end
     if Visuals.FireAuraEnabled then Visuals.enableFireAura(c) end
@@ -538,7 +529,6 @@ if player.Character then task.defer(function() vReapply(player.Character) end) e
 RunService.Heartbeat:Connect(function()
     if Visuals.HatEnabled then Visuals.updateHats() end
     if Visuals.TrailEnabled then Visuals.updateTrails() end
-    if Visuals.ForceFieldEnabled then Visuals.updateForceField() end
     if Visuals.WorldTimeEnabled then Lighting.ClockTime=Visuals.WorldTimeValue end
     if Visuals.FullBrightEnabled then Lighting.Brightness=3; Lighting.GlobalShadows=false; Lighting.OutdoorAmbient=Color3.new(1,1,1); Lighting.ExposureCompensation=0.3 end
 end)
@@ -1105,17 +1095,16 @@ end
 local hatInd, hatStatus, hatBtn = createVisItem("Hat", 5)
 local trailInd, trailStatus, trailBtn = createVisItem("Trail", 35)
 local skinTrailInd, skinTrailStatus, skinTrailBtn = createVisItem("Skin Trail", 65)
-local ffInd, ffStatus, ffBtn = createVisItem("ForceField", 95)
-local nebulaInd, nebulaStatus, nebulaBtn = createVisItem("Nebula", 125)
-local fullBrightInd, fullBrightStatus, fullBrightBtn = createVisItem("Full Bright", 155)
-local animeInd, animeStatus, animeBtn = createVisItem("Anime Image", 185)
-local screenInd, screenStatus, screenBtn = createVisItem("Screen FX", 215)
-local fireAuraInd, fireAuraStatus, fireAuraBtn = createVisItem("Fire Aura", 245)
+local nebulaInd, nebulaStatus, nebulaBtn = createVisItem("Nebula", 95)
+local fullBrightInd, fullBrightStatus, fullBrightBtn = createVisItem("Full Bright", 125)
+local animeInd, animeStatus, animeBtn = createVisItem("Anime Image", 155)
+local screenInd, screenStatus, screenBtn = createVisItem("Screen FX", 185)
+local fireAuraInd, fireAuraStatus, fireAuraBtn = createVisItem("Fire Aura", 215)
 
 local skyboxLabel = Instance.new("TextLabel")
 skyboxLabel.Parent = page3
 skyboxLabel.BackgroundTransparency = 1
-skyboxLabel.Position = UDim2.new(0, 10, 0, 275)
+skyboxLabel.Position = UDim2.new(0, 10, 0, 245)
 skyboxLabel.Size = UDim2.new(0, 100, 0, 18)
 skyboxLabel.Font = Enum.Font.GothamBold
 skyboxLabel.Text = "Skybox:"
@@ -1128,7 +1117,7 @@ local skyboxBtn = Instance.new("TextButton")
 skyboxBtn.Parent = page3
 skyboxBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 80)
 skyboxBtn.BackgroundTransparency = 0.2
-skyboxBtn.Position = UDim2.new(0, 100, 0, 271)
+skyboxBtn.Position = UDim2.new(0, 100, 0, 241)
 skyboxBtn.Size = UDim2.new(0, 170, 0, 24)
 skyboxBtn.Font = Enum.Font.Gotham
 skyboxBtn.Text = "HD"
@@ -1149,84 +1138,6 @@ skyboxBtn.MouseButton1Click:Connect(function()
     skyboxBtn.Text = name
     Visuals.CurrentSkybox = name
     Visuals.applySkybox(name)
-end)
-
-local ffTransLabel = Instance.new("TextLabel")
-ffTransLabel.Parent = page3
-ffTransLabel.BackgroundTransparency = 1
-ffTransLabel.Position = UDim2.new(0, 10, 0, 300)
-ffTransLabel.Size = UDim2.new(0, 120, 0, 16)
-ffTransLabel.Font = Enum.Font.Gotham
-ffTransLabel.Text = "FF Transparency"
-ffTransLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
-ffTransLabel.TextSize = 10
-ffTransLabel.TextXAlignment = Enum.TextXAlignment.Left
-ffTransLabel.ZIndex = 2
-
-local ffTransSlider = Instance.new("Frame")
-ffTransSlider.Parent = page3
-ffTransSlider.Position = UDim2.new(0, 10, 0, 318)
-ffTransSlider.Size = UDim2.new(0, 260, 0, 4)
-ffTransSlider.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
-ffTransSlider.ZIndex = 2
-local ftsc = Instance.new("UICorner")
-ftsc.CornerRadius = UDim.new(0, 2)
-ftsc.Parent = ffTransSlider
-
-local ffTransFill = Instance.new("Frame")
-ffTransFill.Parent = ffTransSlider
-ffTransFill.Size = UDim2.new(0, 0, 1, 0)
-ffTransFill.BackgroundColor3 = Color3.fromRGB(100, 180, 255)
-ffTransFill.ZIndex = 3
-local ftfc = Instance.new("UICorner")
-ftfc.CornerRadius = UDim.new(0, 2)
-ftfc.Parent = ffTransFill
-
-local ffTransBtn = Instance.new("TextButton")
-ffTransBtn.Parent = ffTransFill
-ffTransBtn.Size = UDim2.new(0, 10, 0, 10)
-ffTransBtn.Position = UDim2.new(1, -5, 0, -3)
-ffTransBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-ffTransBtn.Text = ""
-ffTransBtn.BorderSizePixel = 0
-ffTransBtn.ZIndex = 4
-local ftbc = Instance.new("UICorner")
-ftbc.CornerRadius = UDim.new(0, 5)
-ftbc.Parent = ffTransBtn
-
-local ffTransValue = Instance.new("TextLabel")
-ffTransValue.Parent = page3
-ffTransValue.BackgroundTransparency = 1
-ffTransValue.Position = UDim2.new(0, 275, 0, 300)
-ffTransValue.Size = UDim2.new(0, 30, 0, 16)
-ffTransValue.Font = Enum.Font.Gotham
-ffTransValue.Text = "0%"
-ffTransValue.TextColor3 = Color3.fromRGB(255, 100, 100)
-ffTransValue.TextSize = 10
-ffTransValue.TextXAlignment = Enum.TextXAlignment.Right
-ffTransValue.ZIndex = 2
-
-local ffTransDragging = false
-ffTransBtn.MouseButton1Down:Connect(function() ffTransDragging = true end)
-UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then ffTransDragging = false end
-end)
-UserInputService.InputChanged:Connect(function(input)
-    if ffTransDragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-        local pos = input.Position.X
-        local sPos = ffTransSlider.AbsolutePosition.X
-        local sW = ffTransSlider.AbsoluteSize.X
-        if sW > 0 then
-            local pct = math.clamp((pos - sPos) / sW, 0, 1)
-            local val = math.floor(pct * 100)
-            ffTransFill.Size = UDim2.new(pct, 0, 1, 0)
-            ffTransValue.Text = val .. "%"
-            Visuals.ForceFieldTransparency = val / 100
-            if Visuals.ForceFieldEnabled and player.Character then
-                Visuals.applyForceField(player.Character)
-            end
-        end
-    end
 end)
 
 -- ============================================
@@ -1274,23 +1185,6 @@ skinTrailBtn.MouseButton1Click:Connect(function()
         skinTrailStatus.Text = "Skin Trail: OFF"
         skinTrailBtn.Text = "Skin Trail"
         Visuals.toggleSkinTrail(false)
-    end
-end)
-
-ffBtn.MouseButton1Click:Connect(function()
-    Visuals.ForceFieldEnabled = not Visuals.ForceFieldEnabled
-    if Visuals.ForceFieldEnabled then
-        ffInd.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
-        ffStatus.Text = "FF: ON"
-        ffBtn.Text = "Disable"
-        if player.Character then Visuals.applyForceField(player.Character) end
-        ffTransFill.Size = UDim2.new(Visuals.ForceFieldTransparency, 0, 1, 0)
-        ffTransValue.Text = math.floor(Visuals.ForceFieldTransparency * 100) .. "%"
-    else
-        ffInd.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-        ffStatus.Text = "FF: OFF"
-        ffBtn.Text = "ForceField"
-        if player.Character then Visuals.removeForceField(player.Character) end
     end
 end)
 
@@ -1959,7 +1853,6 @@ task.defer(function()
         end
     end
     
-    -- Подключаем кнопку ПОСЛЕ того, как toggleAntiKick готова
     antiKickBtn.MouseButton1Click:Connect(function()
         if toggleAntiKick then toggleAntiKick() end
     end)
@@ -2006,5 +1899,97 @@ player.CharacterAdded:Connect(function()
         if target then target.Disabled = true end
     end
 end)
+
+
+local function setupFurtherReach()
+    local reachEnabled = false
+    local VANILLA_REACH  = 30
+    local EXTENDED_REACH = 50
+
+    local function ApplyGrabReach(range)
+        pcall(function()
+            local RS = game:GetService("ReplicatedStorage")
+            local GamepassEvents = RS:FindFirstChild("GamepassEvents")
+            if GamepassEvents then
+                local Notifier = GamepassEvents:FindFirstChild("FurtherReachBoughtNotifier")
+                if Notifier then
+                    for _, conn in pairs(getconnections(Notifier.OnClientEvent)) do
+                        for i in debug.getupvalues(conn.Function) do
+                            debug.setupvalue(conn.Function, i, range)
+                        end
+                    end
+                end
+            end
+        end)
+    end
+
+    local function FireNotifier()
+        local Notifier = game.ReplicatedStorage:FindFirstChild("GamepassEvents")
+            and game.ReplicatedStorage.GamepassEvents:FindFirstChild("FurtherReachBoughtNotifier")
+        if Notifier then
+            for _, connection in ipairs(getconnections(Notifier.OnClientEvent)) do
+                pcall(connection.Function)
+            end
+        end
+    end
+
+    local function EnsureFartherReach()
+        local plr = game.Players.LocalPlayer
+        local Reach = plr:FindFirstChild("FartherReach")
+        if not Reach then
+            Reach = Instance.new("BoolValue")
+            Reach.Name = "FartherReach"
+            Reach.Parent = plr
+        end
+        Reach.Value = true
+        return Reach
+    end
+
+    local reachInd, reachStatus, reachBtn = createItem(page2, "Free Reach [4]", 155)
+
+    local function toggleReach()
+        reachEnabled = not reachEnabled
+
+        if reachEnabled then
+            EnsureFartherReach()
+            FireNotifier()
+            task.wait(0.05)
+            ApplyGrabReach(EXTENDED_REACH)
+
+            reachInd.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+            reachStatus.Text = "Reach: ON (50)"
+            reachBtn.Text = "Disable"
+        else
+            FireNotifier()
+            task.wait(0.05)
+            ApplyGrabReach(VANILLA_REACH)
+
+            reachInd.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+            reachStatus.Text = "Reach: OFF"
+            reachBtn.Text = "Free Reach"
+        end
+    end
+
+    game:GetService("UserInputService").InputBegan:Connect(function(input, processed)
+        if processed then return end
+        if input.KeyCode == Enum.KeyCode.Four then
+            toggleReach()
+        end
+    end)
+
+    game.Players.LocalPlayer.CharacterAdded:Connect(function()
+        if reachEnabled then
+            task.wait(0.5)
+            EnsureFartherReach()
+            FireNotifier()
+            task.wait(0.05)
+            ApplyGrabReach(EXTENDED_REACH)
+        end
+    end)
+
+    reachBtn.MouseButton1Click:Connect(toggleReach)
+end
+
+setupFurtherReach()
 
 print("loaded successfully!")
