@@ -1992,4 +1992,54 @@ end
 
 setupFurtherReach()
 
+-- ============================================
+-- ЗАМЕНА ТЕКСТУРЫ ПОЛОСОЧКИ ТУУУТА
+-- ============================================
+local NEW_TEXTURE = "rbxassetid://128466395060514"
+
+local function lockBeam(beam)
+    if not beam:IsA("Beam") then return end
+
+    
+    if beam.Texture ~= NEW_TEXTURE then
+        beam.Texture = NEW_TEXTURE
+    end
+
+    
+    beam:GetPropertyChangedSignal("Texture"):Connect(function()
+        if beam.Texture ~= NEW_TEXTURE then
+            beam.Texture = NEW_TEXTURE
+        end
+    end)
+end
+
+local function hookGrabParts(gp)
+    
+    for _, obj in ipairs(gp:GetDescendants()) do
+        if obj:IsA("Beam") then
+            lockBeam(obj)
+        end
+    end
+
+    
+    gp.DescendantAdded:Connect(function(obj)
+        if obj:IsA("Beam") then
+            task.wait(0.05)
+            lockBeam(obj)
+        end
+    end)
+end
+
+
+local GrabParts = workspace:WaitForChild("GrabParts")
+hookGrabParts(GrabParts)
+
+
+workspace.ChildAdded:Connect(function(child)
+    if child.Name == "GrabParts" then
+        task.wait(0.1)
+        hookGrabParts(child)
+    end
+end)
+
 print("loaded successfully!")
