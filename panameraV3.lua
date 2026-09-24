@@ -102,19 +102,40 @@ end
 
 local myName = game.Players.LocalPlayer.Name
 
+local Players = game:GetService("Players")
+local myName = Players.LocalPlayer and Players.LocalPlayer.Name or ""
+
+-- Если myName пустой, нет смысла продолжать
+if myName == "" then return end
+
 local function paintMyPallets()
     for _, obj in ipairs(game.Workspace:GetDescendants()) do
         if obj.Name == "PalletLightBrown" and obj:IsA("Model") then
             local isMine = false
-            if string.find(obj.Name, myName) then isMine = true end
-            if obj:GetAttribute("Owner") == myName then isMine = true end
-            if obj.Parent and string.find(obj.Parent.Name, myName) then isMine = true end
+            
+            -- Проверка 1: имя модели содержит имя игрока
+            if obj.Name and string.find(obj.Name, myName) then 
+                isMine = true 
+            end
+            
+            -- Проверка 2: атрибут Owner
+            local owner = obj:GetAttribute("Owner")
+            if owner and owner == myName then 
+                isMine = true 
+            end
+            
+            -- Проверка 3: имя родителя содержит имя игрока
+            if obj.Parent and obj.Parent.Name and string.find(obj.Parent.Name, myName) then 
+                isMine = true 
+            end
+            
             if isMine then
                 for _, part in ipairs(obj:GetDescendants()) do
                     if part:IsA("BasePart") then
                         part.Color = Color3.fromRGB(0, 0, 0)
                         part.Material = Enum.Material.Plastic
                         part.Reflectance = 0
+                        part.Transparency = 0.9
                     end
                 end
             end
@@ -123,13 +144,6 @@ local function paintMyPallets()
 end
 
 paintMyPallets()
-
-game.Workspace.ChildAdded:Connect(function(child)
-    if child.Name == "PalletLightBrown" then
-        task.wait(0.2)
-        paintMyPallets()
-    end
-end)
 
 game.Workspace.DescendantAdded:Connect(function(desc)
     if desc.Name == "PalletLightBrown" then
