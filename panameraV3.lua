@@ -165,7 +165,7 @@ local timeEnabled = false
 local antiLagEnabled = false
 local jerkOffActive = false
 
-local normalFOV = 120
+local normalFOV = 80
 local boostedFOV = 120
 local guiVisible = true
 local currentPage = 1
@@ -183,7 +183,7 @@ espFolder.Parent = game.CoreGui
 local espElements = {}
 
 -- ============================================
--- АНЧОРИК
+-- АНЧОРИКАС
 -- ============================================
 AnchoredObjects = AnchoredObjects or {}
 SB_LineTransparencyValue = SB_LineTransparencyValue or Instance.new("NumberValue")
