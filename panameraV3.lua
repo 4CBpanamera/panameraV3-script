@@ -1884,7 +1884,7 @@ jerkOffBtn.MouseButton1Click:Connect(toggleJerkOff)
 
 UserInputService.InputBegan:Connect(function(input, processed)
     if processed then return end
-    if input.KeyCode == Enum.KeyCode.R then toggleFOV()
+    if input.KeyCode == Enum.KeyCode.P then toggleFOV()
     elseif input.KeyCode == Enum.KeyCode.Z then teleportToCenter()
     elseif input.KeyCode == Enum.KeyCode.C then activateRagdoll()
     elseif input.KeyCode == Enum.KeyCode.V then toggleThirdPerson()
@@ -2053,4 +2053,4 @@ workspace.ChildAdded:Connect(function(child)
     end
 end)
 
-print("loaded successfully!")
+print("strong1337 loaded successfully!")
