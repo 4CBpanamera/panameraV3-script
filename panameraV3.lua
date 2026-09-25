@@ -1152,7 +1152,7 @@ skyboxBtn.MouseButton1Click:Connect(function()
 end)
 
 -- ============================================
--- FORCEFIELD SKIN (с кнопкой Rainbow сверху)
+-- скин прозрачни
 -- ============================================
 do
     local UIS = UserInputService
@@ -1172,10 +1172,10 @@ do
         RainbowBtn = nil,
     }
 
-    -- UI: основная кнопка
+    
     FF.Ind, FF.Status, FF.Btn = createVisItem("ForceField", 275)
 
-    -- UI: панель
+    
     local ffFrame = Instance.new("Frame")
     ffFrame.Parent = page3
     ffFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
@@ -1190,7 +1190,7 @@ do
     ffc.Parent = ffFrame
     FF.Frame = ffFrame
 
-    -- Кнопка Rainbow Mode (на месте бывшей надписи)
+    
     local ffRainbowBtn = Instance.new("TextButton")
     ffRainbowBtn.Parent = ffFrame
     ffRainbowBtn.Position = UDim2.new(0, 10, 0, 6)
@@ -1208,7 +1208,7 @@ do
     frc.Parent = ffRainbowBtn
     FF.RainbowBtn = ffRainbowBtn
 
-    -- Функции эффекта
+    
     local function SaveOriginals(char)
         if not char then return end
         FF.Original[char] = {}
@@ -1254,7 +1254,7 @@ do
         end
     end
 
-    -- Слайдеры RGB (сдвинуты чуть ниже кнопки Rainbow)
+    
     local function makeSlider(labelText, yPos, color, key)
         local label = Instance.new("TextLabel")
         label.Parent = ffFrame
@@ -1348,7 +1348,7 @@ do
     makeSlider("G", 65, Color3.fromRGB(80, 255, 80), "G")
     makeSlider("B", 90, Color3.fromRGB(80, 160, 255), "B")
 
-    -- Главный toggle
+    
     FF.Btn.MouseButton1Click:Connect(function()
         FF.Enabled = not FF.Enabled
         ffFrame.Visible = FF.Enabled
@@ -1378,7 +1378,7 @@ do
         end
     end)
 
-    -- Rainbow toggle
+    
     ffRainbowBtn.MouseButton1Click:Connect(function()
         FF.Rainbow = not FF.Rainbow
         if FF.Rainbow then
@@ -1393,9 +1393,7 @@ do
     end)
 end
 
--- ============================================
--- TOGGLES VISUALS
--- ============================================
+
 hatBtn.MouseButton1Click:Connect(function()
     Visuals.HatEnabled = not Visuals.HatEnabled
     if Visuals.HatEnabled then
@@ -1516,9 +1514,7 @@ fireAuraBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- ============================================
--- ФУНКЦИИ MAIN
--- ============================================
+
 local function toggleFOV()
     fovEnabled = not fovEnabled
     camera.FieldOfView = fovEnabled and boostedFOV or normalFOV
@@ -1840,7 +1836,7 @@ local function toggleGUI()
 end
 
 -- ============================================
--- ANTI KICK (в отдельном чанке через task.defer)
+-- антикик бу панамерос
 -- ============================================
 local toggleAntiKick
 
@@ -2294,5 +2290,123 @@ workspace.ChildAdded:Connect(function(child)
         hookGrabParts(child)
     end
 end)
+
+-- ============================================
+-- визуал на бомбы типа бля
+-- ============================================
+do
+    local RS = game:GetService("ReplicatedStorage")
+
+    
+    local ExplosionBrightness = 50
+    local ParticleSize        = 1
+    local ParticleSpeed       = 1.5
+    local RainbowEnabled      = true   
+
+    
+    local origBrightness = {}
+    local origSize       = {}
+    local origSpeed      = {}
+    local origColor      = {}
+
+    local presets
+    for _ = 1, 30 do
+        presets = RS:FindFirstChild("ExplosionMaker")
+            and RS.ExplosionMaker:FindFirstChild("ParticlePresets")
+        if presets then break end
+        task.wait(0.5)
+    end
+
+    if not presets then
+        warn("[Panamera] ExplosionMaker/ParticlePresets не найдены — пропуск.")
+        return
+    end
+
+    
+    for _, particle in ipairs(presets:GetChildren()) do
+        if particle:IsA("ParticleEmitter") then
+            origBrightness[particle] = particle.Brightness
+            origSize[particle]       = particle.Size
+            origSpeed[particle]      = particle.Speed
+            origColor[particle]      = particle.Color
+        end
+    end
+
+    
+    local function MakeRainbow()
+        return ColorSequence.new({
+            ColorSequenceKeypoint.new(0,    Color3.fromRGB(255, 0,   0)),
+            ColorSequenceKeypoint.new(0.17, Color3.fromRGB(255, 165, 0)),
+            ColorSequenceKeypoint.new(0.34, Color3.fromRGB(255, 255, 0)),
+            ColorSequenceKeypoint.new(0.5,  Color3.fromRGB(0,   255, 0)),
+            ColorSequenceKeypoint.new(0.67, Color3.fromRGB(0,   120, 255)),
+            ColorSequenceKeypoint.new(0.84, Color3.fromRGB(120, 0,   255)),
+            ColorSequenceKeypoint.new(1,    Color3.fromRGB(255, 0,   0)),
+        })
+    end
+
+    
+    local function ApplyToParticle(particle)
+        if not particle:IsA("ParticleEmitter") then return end
+
+        
+        if origBrightness[particle] then
+            particle.Brightness = origBrightness[particle] * 2 * (ExplosionBrightness - 9)
+        end
+
+        
+        if origSize[particle] then
+            local orig = origSize[particle]
+            local newKPs = {}
+            for _, kp in ipairs(orig.Keypoints) do
+                table.insert(newKPs, NumberSequenceKeypoint.new(kp.Time, kp.Value * ParticleSize, kp.Envelope))
+            end
+            particle.Size = NumberSequence.new(newKPs)
+        end
+
+        
+        if origSpeed[particle] then
+            local orig = origSpeed[particle]
+            particle.Speed = NumberRange.new(orig.Min * ParticleSpeed, orig.Max * ParticleSpeed)
+        end
+
+        
+        if RainbowEnabled then
+            particle.Color = MakeRainbow()
+        end
+    end
+
+    
+    for _, particle in ipairs(presets:GetChildren()) do
+        ApplyToParticle(particle)
+    end
+
+    
+    presets.DescendantAdded:Connect(function(obj)
+        task.wait(0.05)
+        if obj:IsA("ParticleEmitter") then
+            origBrightness[obj] = obj.Brightness
+            origSize[obj]       = obj.Size
+            origSpeed[obj]      = obj.Speed
+            origColor[obj]      = obj.Color
+            ApplyToParticle(obj)
+        end
+    end)
+
+    
+    if RainbowEnabled then
+        task.spawn(function()
+            while task.wait(0.1) do
+                for _, particle in ipairs(presets:GetChildren()) do
+                    if particle:IsA("ParticleEmitter") then
+                        particle.Color = MakeRainbow()
+                    end
+                end
+            end
+        end)
+    end
+
+    
+end
 
 print("strong1337 loaded successfully!")
