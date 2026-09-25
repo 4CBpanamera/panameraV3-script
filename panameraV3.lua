@@ -1152,6 +1152,248 @@ skyboxBtn.MouseButton1Click:Connect(function()
 end)
 
 -- ============================================
+-- FORCEFIELD SKIN (с кнопкой Rainbow сверху)
+-- ============================================
+do
+    local UIS = UserInputService
+    local RS = RunService
+    local PLR = player
+
+    local FF = {
+        Enabled = false,
+        Rainbow = false,
+        Color = Color3.fromRGB(128, 128, 128),
+        Original = {},
+        Heartbeat = nil,
+        RespawnConn = nil,
+        R = 128, G = 128, B = 128,
+        Frame = nil, Btn = nil,
+        Ind = nil, Status = nil,
+        RainbowBtn = nil,
+    }
+
+    -- UI: основная кнопка
+    FF.Ind, FF.Status, FF.Btn = createVisItem("ForceField", 275)
+
+    -- UI: панель
+    local ffFrame = Instance.new("Frame")
+    ffFrame.Parent = page3
+    ffFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    ffFrame.BackgroundTransparency = 0.5
+    ffFrame.Position = UDim2.new(0, 10, 0, 305)
+    ffFrame.Size = UDim2.new(0, 265, 0, 145)
+    ffFrame.Visible = false
+    ffFrame.ClipsDescendants = true
+    ffFrame.ZIndex = 2
+    local ffc = Instance.new("UICorner")
+    ffc.CornerRadius = UDim.new(0, 8)
+    ffc.Parent = ffFrame
+    FF.Frame = ffFrame
+
+    -- Кнопка Rainbow Mode (на месте бывшей надписи)
+    local ffRainbowBtn = Instance.new("TextButton")
+    ffRainbowBtn.Parent = ffFrame
+    ffRainbowBtn.Position = UDim2.new(0, 10, 0, 6)
+    ffRainbowBtn.Size = UDim2.new(1, -20, 0, 26)
+    ffRainbowBtn.BackgroundColor3 = Color3.fromRGB(80, 40, 120)
+    ffRainbowBtn.BackgroundTransparency = 0.2
+    ffRainbowBtn.Text = "Rainbow Mode: OFF"
+    ffRainbowBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    ffRainbowBtn.Font = Enum.Font.GothamBold
+    ffRainbowBtn.TextSize = 12
+    ffRainbowBtn.BorderSizePixel = 0
+    ffRainbowBtn.ZIndex = 3
+    local frc = Instance.new("UICorner")
+    frc.CornerRadius = UDim.new(0, 5)
+    frc.Parent = ffRainbowBtn
+    FF.RainbowBtn = ffRainbowBtn
+
+    -- Функции эффекта
+    local function SaveOriginals(char)
+        if not char then return end
+        FF.Original[char] = {}
+        for _, part in ipairs(char:GetDescendants()) do
+            if part:IsA("BasePart") then
+                FF.Original[char][part] = { Color = part.Color, Material = part.Material }
+            end
+        end
+    end
+
+    local function Apply(char)
+        if not char then return end
+        SaveOriginals(char)
+        for _, part in ipairs(char:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.Color = FF.Color
+                part.Material = Enum.Material.ForceField
+            end
+        end
+    end
+
+    local function Remove(char)
+        if not char then return end
+        local saved = FF.Original[char]
+        if not saved then return end
+        for part, data in pairs(saved) do
+            if part and part.Parent and part:IsA("BasePart") then
+                part.Color = data.Color
+                part.Material = data.Material
+            end
+        end
+        FF.Original[char] = nil
+    end
+
+    local function Update()
+        local char = PLR.Character
+        if not char or not FF.Enabled then return end
+        local col = FF.Rainbow and Color3.fromHSV((tick() % 5) / 5, 1, 1) or FF.Color
+        for _, part in ipairs(char:GetDescendants()) do
+            if part:IsA("BasePart") and part.Material == Enum.Material.ForceField then
+                part.Color = col
+            end
+        end
+    end
+
+    -- Слайдеры RGB (сдвинуты чуть ниже кнопки Rainbow)
+    local function makeSlider(labelText, yPos, color, key)
+        local label = Instance.new("TextLabel")
+        label.Parent = ffFrame
+        label.BackgroundTransparency = 1
+        label.Position = UDim2.new(0, 10, 0, yPos)
+        label.Size = UDim2.new(0, 20, 0, 14)
+        label.Font = Enum.Font.GothamBold
+        label.Text = labelText
+        label.TextColor3 = color
+        label.TextSize = 12
+        label.ZIndex = 3
+
+        local valLabel = Instance.new("TextLabel")
+        valLabel.Parent = ffFrame
+        valLabel.BackgroundTransparency = 1
+        valLabel.Position = UDim2.new(1, -50, 0, yPos)
+        valLabel.Size = UDim2.new(0, 40, 0, 14)
+        valLabel.Font = Enum.Font.GothamBold
+        valLabel.Text = tostring(FF[key])
+        valLabel.TextColor3 = color
+        valLabel.TextSize = 11
+        valLabel.TextXAlignment = Enum.TextXAlignment.Right
+        valLabel.ZIndex = 3
+
+        local slider = Instance.new("Frame")
+        slider.Parent = ffFrame
+        slider.Position = UDim2.new(0, 35, 0, yPos + 4)
+        slider.Size = UDim2.new(0, 220, 0, 5)
+        slider.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+        slider.ZIndex = 3
+        local sc = Instance.new("UICorner")
+        sc.CornerRadius = UDim.new(0, 2.5)
+        sc.Parent = slider
+
+        local fill = Instance.new("Frame")
+        fill.Parent = slider
+        fill.Size = UDim2.new(FF[key] / 255, 0, 1, 0)
+        fill.BackgroundColor3 = color
+        fill.ZIndex = 4
+        local fc = Instance.new("UICorner")
+        fc.CornerRadius = UDim.new(0, 2.5)
+        fc.Parent = fill
+
+        local btn = Instance.new("TextButton")
+        btn.Parent = fill
+        btn.Size = UDim2.new(0, 12, 0, 12)
+        btn.Position = UDim2.new(1, -6, 0, -3.5)
+        btn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        btn.Text = ""
+        btn.BorderSizePixel = 0
+        btn.ZIndex = 5
+        local bc = Instance.new("UICorner")
+        bc.CornerRadius = UDim.new(0, 6)
+        bc.Parent = btn
+
+        local dragging = false
+        btn.MouseButton1Down:Connect(function() dragging = true end)
+        UIS.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
+        end)
+
+        local function setVal(inputX)
+            local sPos = slider.AbsolutePosition.X
+            local sW = slider.AbsoluteSize.X
+            if sW > 0 then
+                local pct = math.clamp((inputX - sPos) / sW, 0, 1)
+                local val = math.floor(pct * 255)
+                FF[key] = val
+                fill.Size = UDim2.new(val / 255, 0, 1, 0)
+                valLabel.Text = tostring(val)
+                if not FF.Rainbow then
+                    FF.Color = Color3.fromRGB(FF.R, FF.G, FF.B)
+                    if FF.Enabled then Update() end
+                end
+            end
+        end
+
+        UIS.InputChanged:Connect(function(input)
+            if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+                setVal(input.Position.X)
+            end
+        end)
+        slider.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                setVal(input.Position.X)
+            end
+        end)
+    end
+
+    makeSlider("R", 40, Color3.fromRGB(255, 80, 80), "R")
+    makeSlider("G", 65, Color3.fromRGB(80, 255, 80), "G")
+    makeSlider("B", 90, Color3.fromRGB(80, 160, 255), "B")
+
+    -- Главный toggle
+    FF.Btn.MouseButton1Click:Connect(function()
+        FF.Enabled = not FF.Enabled
+        ffFrame.Visible = FF.Enabled
+
+        if FF.Enabled then
+            FF.Color = Color3.fromRGB(FF.R, FF.G, FF.B)
+            if PLR.Character then Apply(PLR.Character) end
+            if not FF.Heartbeat then
+                FF.Heartbeat = RS.Heartbeat:Connect(Update)
+            end
+            if not FF.RespawnConn then
+                FF.RespawnConn = PLR.CharacterAdded:Connect(function(newChar)
+                    task.wait(0.5)
+                    if FF.Enabled then Apply(newChar) end
+                end)
+            end
+            FF.Ind.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+            FF.Status.Text = "ForceField: ON"
+            FF.Btn.Text = "Disable"
+        else
+            if PLR.Character then Remove(PLR.Character) end
+            if FF.Heartbeat then FF.Heartbeat:Disconnect(); FF.Heartbeat = nil end
+            if FF.RespawnConn then FF.RespawnConn:Disconnect(); FF.RespawnConn = nil end
+            FF.Ind.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+            FF.Status.Text = "ForceField: OFF"
+            FF.Btn.Text = "ForceField"
+        end
+    end)
+
+    -- Rainbow toggle
+    ffRainbowBtn.MouseButton1Click:Connect(function()
+        FF.Rainbow = not FF.Rainbow
+        if FF.Rainbow then
+            ffRainbowBtn.Text = "Rainbow Mode: ON"
+            ffRainbowBtn.BackgroundColor3 = Color3.fromRGB(200, 100, 255)
+        else
+            ffRainbowBtn.Text = "Rainbow Mode: OFF"
+            ffRainbowBtn.BackgroundColor3 = Color3.fromRGB(80, 40, 120)
+            FF.Color = Color3.fromRGB(FF.R, FF.G, FF.B)
+            if FF.Enabled then Update() end
+        end
+    end)
+end
+
+-- ============================================
 -- TOGGLES VISUALS
 -- ============================================
 hatBtn.MouseButton1Click:Connect(function()
